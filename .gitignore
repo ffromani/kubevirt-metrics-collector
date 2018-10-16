@@ -23,9 +23,7 @@ _testmain.go
 *.test
 *.prof
 
-# main binary
-procwatch
-# test conf file
-procwatch.json
-
+cmd/kube-metrics-collector/kube-metrics-collector
+Gopkg.lock
+vendor/
 tags
