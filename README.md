@@ -1,7 +1,7 @@
-procwatch
-=========
+kube-metrics-collector
+======================
 
-Watch processes and report their usage consumption (CPU, memory).
+kube-metrics-collector is a [kubevirt](http://kubevirt.io) addon that watches the processes used by `virt-launcher` to run VMs, and report their usage consumption (CPU, memory).
 
 License
 =======
