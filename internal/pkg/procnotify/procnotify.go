@@ -43,6 +43,7 @@ type Proc struct {
 
 type Notifier struct {
 	Debug    bool
+	Prefix   string
 	targets  []*Target
 	procs    map[int32]Proc
 	pr       *podfind.PodResolver
@@ -64,6 +65,7 @@ func (notif *Notifier) MatchArgv(argv []string) (procfind.Entry, bool) {
 
 func NewNotifier(targets []Config, pr *podfind.PodResolver, sinkPath string) *Notifier {
 	notif := Notifier{
+		Prefix:   "exec", // backward compatibility with collectd
 		pr:       pr,
 		sinkPath: sinkPath,
 	}
@@ -123,22 +125,29 @@ func (notif *Notifier) IsCurrent() bool {
 	return true
 }
 
-func round(val float64, roundOn float64, places int) float64 {
-	var round float64
-	pow := math.Pow(10, float64(places))
-	digit := pow * val
-	_, div := math.Modf(digit)
-	if div >= roundOn {
-		round = math.Ceil(digit)
+func (notif *Notifier) makeIdent(proc Proc, hostname string) string {
+	ident := ""
+
+	if !proc.t.StableName {
+		if notif.pr != nil {
+			podName, err := notif.pr.FindPodByPID(proc.p.Pid)
+			if err == nil {
+				ident = fmt.Sprintf("PUTVAL %s/%s-%s-%s", hostname, notif.Prefix, proc.t.Name, podName)
+			}
+		}
+		if ident == "" {
+			ident = fmt.Sprintf("PUTVAL %s/%s-%s-%d", hostname, notif.Prefix, proc.t.Name, proc.p.Pid)
+		}
 	} else {
-		round = math.Floor(digit)
+		ident = fmt.Sprintf("PUTVAL %s/%s-%s", hostname, notif.Prefix, proc.t.Name)
 	}
-	return round / pow
+
+	return ident
+
 }
 
-func (notif *Notifier) collectd(proc Proc, hostname string, interval int) error {
+func (notif *Notifier) emitCollectd(proc Proc, hostname string, interval int) error {
 	var err error
-	var ident string
 
 	var sink io.Writer = os.Stdout
 	if notif.sinkPath != "" {
@@ -150,18 +159,9 @@ func (notif *Notifier) collectd(proc Proc, hostname string, interval int) error 
 		sink = sock
 	}
 
-	if !proc.t.StableName {
-		if notif.pr != nil {
-			podName, err := notif.pr.FindPodByPID(proc.p.Pid)
-			if err == nil {
-				ident = fmt.Sprintf("PUTVAL %s/exec-%s-%s", hostname, proc.t.Name, podName)
-			}
-		}
-		if ident == "" {
-			ident = fmt.Sprintf("PUTVAL %s/exec-%s-%d", hostname, proc.t.Name, proc.p.Pid)
-		}
-	} else {
-		ident = fmt.Sprintf("PUTVAL %s/exec-%s", hostname, proc.t.Name)
+	ident := notif.makeIdent(proc, hostname)
+
+	if proc.t.StableName {
 		fmt.Fprintf(sink, "%s/objects interval=%d N:%d\n", ident, interval, proc.p.Pid)
 	}
 
@@ -192,7 +192,7 @@ func (notif *Notifier) collectd(proc Proc, hostname string, interval int) error 
 func (notif *Notifier) Update(hostname string, interval int) {
 	var err error
 	for _, proc := range notif.procs {
-		err = notif.collectd(proc, hostname, interval)
+		err = notif.emitCollectd(proc, hostname, interval)
 		if err != nil {
 			log.Printf("Update failed: %s", err)
 		}
@@ -265,4 +265,17 @@ func (notif *Notifier) Loop(hostname string, interval time.Duration, autoTrack b
 
 		notif.Update(hostname, int(interval.Seconds()))
 	}
+}
+
+func round(val float64, roundOn float64, places int) float64 {
+	var round float64
+	pow := math.Pow(10, float64(places))
+	digit := pow * val
+	_, div := math.Modf(digit)
+	if div >= roundOn {
+		round = math.Ceil(digit)
+	} else {
+		round = math.Floor(digit)
+	}
+	return round / pow
 }

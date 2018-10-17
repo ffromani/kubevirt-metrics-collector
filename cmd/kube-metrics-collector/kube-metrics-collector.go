@@ -25,6 +25,7 @@ type Config struct {
 	CRIEndPoint string              `json:"criendpoint"`
 	AutoTrack   bool                `json:"autotrack"`
 	DebugMode   bool                `json:"debugmode"`
+	Prefix      string              `json:"prefix"`
 }
 
 func (c Config) CountTargets() int {
@@ -148,6 +149,10 @@ func main() {
 
 	notifier := procnotify.NewNotifier(conf.Targets, pr, *sinkPath)
 	notifier.Debug = conf.DebugMode
+	if conf.Prefix != "" {
+		notifier.Prefix = conf.Prefix
+	}
+
 	log.Printf("Tracking:\n")
 	notifier.Dump(os.Stderr)
 
