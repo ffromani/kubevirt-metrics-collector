@@ -1,5 +1,5 @@
 {
-	"criendpoint": "/var/run/dockershim.sock",
+	"criendpoint": "unix:///var/run/dockershim.sock",
 	"interval": "5s",
 	"targets": [{
 		"name": "libvirt",
