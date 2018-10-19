@@ -1,5 +1,6 @@
 {
 	"criendpoint": "unix:///var/run/dockershim.sock",
+	"listenaddress": ":9091",
 	"interval": "5s",
 	"targets": [{
 		"name": "libvirt",

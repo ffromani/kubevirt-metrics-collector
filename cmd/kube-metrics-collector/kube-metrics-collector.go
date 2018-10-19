@@ -2,34 +2,67 @@ package main
 
 import (
 	"github.com/davecgh/go-spew/spew"
-	"github.com/fromanirh/kube-metrics-collector/internal/pkg/podfind"
-	"github.com/fromanirh/kube-metrics-collector/internal/pkg/procnotify"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	flag "github.com/spf13/pflag"
 
+	"github.com/fromanirh/kube-metrics-collector/pkg/monitoring/processes"
+	_ "github.com/fromanirh/kube-metrics-collector/pkg/monitoring/processes/prometheus"
+	"github.com/fromanirh/kube-metrics-collector/pkg/procscanner"
+
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
-	"strconv"
 	"time"
 )
 
-const confFile string = "kube-metrics-collector.json"
+const (
+	DefaultInterval = "5s"
+)
 
 type Config struct {
-	Targets     []procnotify.Config `json:"targets"`
-	Interval    string              `json:"interval"`
-	Hostname    string              `json:"hostname"`
-	CRIEndPoint string              `json:"criendpoint"`
-	AutoTrack   bool                `json:"autotrack"`
-	DebugMode   bool                `json:"debugmode"`
-	Prefix      string              `json:"prefix"`
+	Targets       []procscanner.ProcTarget `json:"targets"`
+	Interval      string                   `json:"interval"`
+	Hostname      string                   `json:"hostname"`
+	ListenAddress string                   `json:"listenaddress"`
+	CRIEndPoint   string                   `json:"criendpoint"`
+	DebugMode     bool                     `json:"debugmode"`
 }
 
-func (c Config) CountTargets() int {
-	return len(c.Targets)
+func (c *Config) Validate() *Config {
+	if len(c.Targets) == 0 {
+		log.Fatalf("missing process(es) to track")
+	}
+	if c.CRIEndPoint == "" {
+		log.Fatalf("missing CRI endpoint")
+	}
+	if c.ListenAddress == "" {
+		log.Fatalf("missing listen address")
+	}
+	return c
+}
+
+func (c *Config) Setup(confFile, intervalString string, debugMode bool) *Config {
+	err := readFile(c, confFile)
+	if err != nil {
+		log.Fatalf("error reading the configuration on '%s': %s", confFile, err)
+	}
+
+	if c.Hostname == "" {
+		c.Hostname, err = os.Hostname()
+		if err != nil {
+			log.Fatalf("error getting the host name: %s", err)
+		}
+	}
+	if c.Interval == "" {
+		c.Interval = intervalString
+	}
+	if debugMode {
+		c.DebugMode = true
+	}
+	return c
 }
 
 func readFile(conf *Config, path string) error {
@@ -47,47 +80,18 @@ func readFile(conf *Config, path string) error {
 		}
 	}
 
-	log.Printf("Read from file: %s", path)
+	log.Printf("read from file: %s", path)
 	return nil
-}
-
-func findInterval(conf Config, args []string) (time.Duration, error) {
-	if len(args) >= 2 {
-		ival, err := strconv.Atoi(args[1])
-		if err != nil {
-			return 0, err
-		}
-		return time.Duration(ival) * time.Second, nil
-	}
-
-	envVar := os.Getenv("COLLECTD_INTERVAL")
-	if envVar != "" {
-		fval, err := strconv.ParseFloat(envVar, 64)
-		if err != nil {
-			return 0, err
-		}
-		return time.Duration(int(fval)) * time.Second, nil
-	}
-
-	if conf.Interval == "" {
-		return 0, errors.New(fmt.Sprintf("invalid interval: %d", conf.Interval))
-	}
-
-	dval, err := time.ParseDuration(conf.Interval)
-	if err != nil {
-		return 0, err
-	}
-	return dval, nil
 }
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s /path/to/kube-metrics-collector.json [interval_seconds]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "usage: %s /path/to/kube-metrics-collector.json\n", os.Args[0])
 		flag.PrintDefaults()
 	}
-	requirePodResolution := flag.BoolP("require-pod", "R", false, "fail if pod resolution is not enabled")
+	intervalString := flag.StringP("interval", "I", DefaultInterval, "metrics collection interval")
 	debugMode := flag.BoolP("debug", "D", false, "enable pod resolution debug mode")
-	sinkPath := flag.StringP("unixsock", "U", "", "send output to <unixsock> not to stdout")
+	checkMode := flag.BoolP("check-config", "C", false, "validate (and dump) configuration and exit")
 	flag.Parse()
 
 	args := flag.Args()
@@ -100,65 +104,63 @@ func main() {
 	log.Printf("kube-metrics-collectorer started")
 	defer log.Printf("kube-metrics-collectorer stopped")
 
-	conf := Config{Interval: "5s"}
-	err := readFile(&conf, args[0])
-	if err != nil {
-		log.Fatalf("error reading the configuration on '%s': %s", args[0], err)
-	}
+	var err error
 
-	conf.Hostname = os.Getenv("COLLECTD_HOSTNAME")
-	if conf.Hostname == "" {
-		conf.Hostname, err = os.Hostname()
-		if err != nil {
-			log.Fatalf("error getting the host name: %s", err)
-		}
-	}
+	conf := &Config{Interval: DefaultInterval}
+	conf.Setup(args[0], *intervalString, *debugMode)
+	conf.Validate()
 
-	interval, err := findInterval(conf, args)
+	interval, err := time.ParseDuration(conf.Interval)
 	if err != nil {
 		log.Fatalf("error getting the polling interval: %s", err)
-	} else {
-		log.Printf("polling interval: %v", interval)
 	}
 
-	dryRun := os.Getenv("PROCWATCH_DRYRUN")
-	if dryRun != "" {
-		log.Printf("%s", spew.Sdump(conf))
+	scanner := procscanner.ProcScanner{}
+	scanner.Targets = conf.Targets
+	if conf.DebugMode {
+		spew.Fdump(os.Stderr, scanner)
+	}
+
+	// here because this way the debug mode can emit both conf and scanner content
+	if *checkMode {
+		spew.Fdump(os.Stderr, conf)
 		return
 	}
 
-	if conf.CountTargets() == 0 {
-		log.Fatalf("missing process(es) to track")
+	finder, err := processes.NewCRIPodFinder(conf.CRIEndPoint, processes.DefaultTimeout, scanner)
+	if err != nil {
+		log.Fatalf("%v", err)
 	}
 
-	var pr *podfind.PodResolver
-	if conf.CRIEndPoint != "" {
-		log.Printf("enabled POD ID resolution")
-		pr, err = podfind.NewPodResolver(conf.CRIEndPoint, 10*time.Second)
+	mon, err := processes.NewDomainMonitor(conf.Hostname, finder)
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+
+	go collect(mon, interval, conf.DebugMode)
+
+	http.Handle("/metrics", promhttp.Handler())
+	log.Fatal(http.ListenAndServe(conf.ListenAddress, nil))
+}
+
+func collect(mon *processes.DomainMonitor, interval time.Duration, debugMode bool) {
+	ticker := time.NewTicker(interval)
+	for {
+		t := <-ticker.C
+		if debugMode {
+			log.Printf("updating at %v", t)
+		}
+
+		start := time.Now()
+		err := mon.Update()
+		stop := time.Now()
+
+		if debugMode {
+			log.Printf("update took %v", stop.Sub(start))
+		}
 		if err != nil {
-			log.Printf("unable to set up pod resolution: %s", err)
-			pr = nil
-		} else {
-			pr.Debug = *debugMode
+			log.Printf("error while updating: %v", err)
 		}
 	}
 
-	if pr == nil && *requirePodResolution {
-		log.Fatalf("pod resolution required but not enabled!")
-	}
-
-	notifier := procnotify.NewNotifier(conf.Targets, pr, *sinkPath)
-	notifier.Debug = conf.DebugMode
-	if conf.Prefix != "" {
-		notifier.Prefix = conf.Prefix
-	}
-
-	log.Printf("Tracking:\n")
-	notifier.Dump(os.Stderr)
-
-	if interval == 0 {
-		notifier.Once(conf.Hostname)
-	} else {
-		notifier.Loop(conf.Hostname, interval, conf.AutoTrack)
-	}
 }
