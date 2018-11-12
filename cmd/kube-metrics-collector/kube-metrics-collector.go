@@ -51,8 +51,8 @@ func main() {
 		return
 	}
 
-	log.Printf("kube-metrics-collectorer started")
-	defer log.Printf("kube-metrics-collectorer stopped")
+	log.Printf("kube-metrics-collector started")
+	defer log.Printf("kube-metrics-collector stopped")
 
 	var err error
 
