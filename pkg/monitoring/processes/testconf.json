@@ -1,0 +1,10 @@
+{
+	"targets": [
+		{
+			"name": "init",
+			"argv": ["/sbin/init"]
+		}
+	],
+	"listenaddress": "9991",
+	"criendpoint": "/var/run/criendpoint.sock"
+}

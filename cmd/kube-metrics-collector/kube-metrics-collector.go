@@ -56,8 +56,9 @@ func main() {
 
 	var err error
 
-	conf := processes.NewConfig()
-	conf.Setup(args[0], *intervalString, *debugMode)
+	conf := processes.NewConfigFromFile(argv[0])
+	conf.Interval = *intervalString
+	conf.DebugMode = *debugMode
 	conf.Validate()
 
 	interval, err := time.ParseDuration(conf.Interval)
@@ -65,9 +66,11 @@ func main() {
 		log.Fatalf("error getting the polling interval: %s", err)
 	}
 
-	scanner := procscanner.ProcScanner{}
-	scanner.Targets = conf.Targets
-	if conf.DebugMode {
+	scanner := procscanner.ProcScanner{
+		Targets: conf.Targets,
+	}
+
+	if *debugMode {
 		spew.Fdump(os.Stderr, scanner)
 	}
 

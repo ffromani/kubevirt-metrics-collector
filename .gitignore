@@ -27,3 +27,6 @@ cmd/kube-metrics-collector/kube-metrics-collector
 Gopkg.lock
 vendor/
 tags
+
+pkg/monitoring/processes/coverage.out
+pkg/procscanner/coverage.out
