@@ -48,9 +48,15 @@ func (dm *DomainMonitor) Update() error {
 }
 
 func (dm *DomainMonitor) updateMetrics() error {
+	var err error
 	for podName, podInfo := range dm.pods {
 		for _, proc := range podInfo.Procs {
-			err := prometheus.UpdateMetricsMemory(dm.hostname, podName, proc)
+			err = prometheus.UpdateMetricsCPU(dm.hostname, podName, proc)
+			if err != nil {
+				continue // TODO
+			}
+
+			err = prometheus.UpdateMetricsMemory(dm.hostname, podName, proc)
 			if err != nil {
 				continue // TODO
 			}
