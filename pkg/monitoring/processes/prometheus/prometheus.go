@@ -82,13 +82,15 @@ func UpdateMetricsMemory(host, domain string, proc *process.Process) error {
 		return err
 	}
 
-	memInfo, err := proc.MemoryInfo()
+	memInfo, err := proc.MemoryInfoEx()
 	if err != nil {
 		return err
 	}
 
 	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "virtual"}).Set(float64(memInfo.VMS / 1024.))
 	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "resident"}).Set(float64(memInfo.RSS / 1024.))
+	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "shared"}).Set(float64(memInfo.Shared / 1024.))
+	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "dirty"}).Set(float64(memInfo.Dirty / 1024.))
 	return nil
 }
 
