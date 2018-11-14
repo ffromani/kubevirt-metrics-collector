@@ -79,6 +79,21 @@ kubectl create -f cluster/kube-service-monitor-vmi.yaml
 
 Please check the next sections for Caveats.
 
+Supported metrics
+=================
+
+You can learn the metrics exposed by `kube-metrics-collector` without deploying in your cluster, using the `-M` flag of the server. Example:
+```bash
+$ ./cmd/kube-metrics-collector/kube-metrics-collector -M 2>&1 | grep -v '^#' | grep kube
+kubevirt_cpu_times_time_seconds{domain="init",host="localhost",name="kube-metrics-collector",type="system"} 0
+kubevirt_cpu_times_time_seconds{domain="init",host="localhost",name="kube-metrics-collector",type="user"} 0
+kubevirt_info{branch="master",goversion="go1.10.4",kubeversion="0.9.1",revision="b55ee16",version="1"} 1
+kubevirt_process_memory_amount_kib{domain="init",host="localhost",name="kube-metrics-collector",type="dirty"} 64820
+kubevirt_process_memory_amount_kib{domain="init",host="localhost",name="kube-metrics-collector",type="resident"} 11796
+kubevirt_process_memory_amount_kib{domain="init",host="localhost",name="kube-metrics-collector",type="shared"} 10096
+kubevirt_process_memory_amount_kib{domain="init",host="localhost",name="kube-metrics-collector",type="virtual"} 544628
+```
+
 
 Notes about integration with kubernetes/kubevirt
 ================================================
