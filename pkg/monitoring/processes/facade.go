@@ -26,6 +26,9 @@ import (
 	"time"
 )
 
+// TODO: this should be const
+var NOTIME = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+
 func Collect(conf *Config, scanner procscanner.ProcScanner, interval time.Duration) error {
 	finder, err := NewCRIPodFinder(conf.CRIEndPoint, DefaultTimeout, scanner)
 	if err != nil {
@@ -38,14 +41,22 @@ func Collect(conf *Config, scanner procscanner.ProcScanner, interval time.Durati
 	}
 
 	ticker := time.NewTicker(interval)
-	for {
-		t := <-ticker.C
-		collectStats(conf, mon, t)
-	}
+	return CollectLoop(mon, ticker.C, conf.DebugMode)
 }
 
-func collectStats(conf *Config, mon *DomainMonitor, now time.Time) error {
-	if conf.DebugMode {
+func CollectLoop(mon Monitor, clock <-chan time.Time, debugMode bool) error {
+	for {
+		t := <-clock
+		if t == NOTIME {
+			break
+		}
+		CollectStats(mon, t, debugMode)
+	}
+	return nil
+}
+
+func CollectStats(mon Monitor, now time.Time, debugMode bool) error {
+	if debugMode {
 		log.Printf("updating at %v", now)
 	}
 
@@ -53,7 +64,7 @@ func collectStats(conf *Config, mon *DomainMonitor, now time.Time) error {
 	err := mon.Update()
 	stop := time.Now()
 
-	if conf.DebugMode {
+	if debugMode {
 		log.Printf("update took %v", stop.Sub(start))
 	}
 	if err != nil {

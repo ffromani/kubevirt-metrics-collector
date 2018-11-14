@@ -21,13 +21,17 @@ package processes
 
 import "github.com/fromanirh/kube-metrics-collector/pkg/monitoring/processes/prometheus"
 
+type Monitor interface {
+	Update() error
+}
+
 type DomainMonitor struct {
 	hostname  string
 	podFinder PodFinder
 	pods      map[string]*PodInfo
 }
 
-func NewDomainMonitor(hostname string, podFinder PodFinder) (*DomainMonitor, error) {
+func NewDomainMonitor(hostname string, podFinder PodFinder) (Monitor, error) {
 	dm := DomainMonitor{
 		hostname:  hostname,
 		podFinder: podFinder,
