@@ -5,6 +5,9 @@ all: binary
 docker: binary
 	docker build .
 
+dockertag: binary
+	docker build -t fromanirh/kube-metrics-collector:devel .
+
 vendor:
 	dep ensure
 

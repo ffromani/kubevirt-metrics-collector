@@ -28,5 +28,6 @@ Gopkg.lock
 vendor/
 tags
 
+internal/pkg/version/version.go
 pkg/monitoring/processes/coverage.out
 pkg/procscanner/coverage.out
