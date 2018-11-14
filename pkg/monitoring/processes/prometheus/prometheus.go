@@ -28,6 +28,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
 	"github.com/shirou/gopsutil/process"
+
+	verinfo "github.com/fromanirh/kube-metrics-collector/internal/pkg/version"
 )
 
 var labels = []string{
@@ -45,10 +47,10 @@ var (
 			Name:      "info",
 			Help:      "Version information",
 			ConstLabels: prometheus.Labels{
-				"branch":      "HEAD",
+				"branch":      verinfo.BRANCH,
 				"goversion":   runtime.Version(),
-				"revision":    "",
-				"kubeversion": "",
+				"revision":    verinfo.REVISION,
+				"kubeversion": verinfo.KUBEVERSION,
 				"version":     "1",
 			},
 		},
