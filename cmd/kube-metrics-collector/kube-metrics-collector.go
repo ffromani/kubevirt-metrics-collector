@@ -24,7 +24,7 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"github.com/fromanirh/kube-metrics-collector/pkg/monitoring/processes"
-	_ "github.com/fromanirh/kube-metrics-collector/pkg/monitoring/processes/prometheus"
+	promlocal "github.com/fromanirh/kube-metrics-collector/pkg/monitoring/processes/prometheus"
 	"github.com/fromanirh/kube-metrics-collector/pkg/procscanner"
 
 	"fmt"
@@ -41,20 +41,26 @@ func main() {
 	}
 	intervalString := flag.StringP("interval", "I", processes.DefaultInterval, "metrics collection interval")
 	debugMode := flag.BoolP("debug", "D", false, "enable pod resolution debug mode")
+	dumpMode := flag.BoolP("dump-metrics", "M", false, "dump the available metrics and exit")
 	checkMode := flag.BoolP("check-config", "C", false, "validate (and dump) configuration and exit")
 	flag.Parse()
 
 	args := flag.Args()
 
+	var err error
+
+	if *dumpMode {
+		err = promlocal.DumpMetrics(os.Stderr)
+		if err != nil {
+			log.Fatalf("error dumping: %v", err)
+		}
+		return
+	}
+
 	if len(args) < 1 {
 		flag.Usage()
 		return
 	}
-
-	log.Printf("kube-metrics-collector started")
-	defer log.Printf("kube-metrics-collector stopped")
-
-	var err error
 
 	conf, err := processes.NewConfigFromFile(os.Args[0])
 	if err != nil {
@@ -83,6 +89,9 @@ func main() {
 		spew.Fdump(os.Stderr, conf)
 		return
 	}
+
+	log.Printf("kube-metrics-collector started")
+	defer log.Printf("kube-metrics-collector stopped")
 
 	go processes.Collect(conf, scanner, interval)
 

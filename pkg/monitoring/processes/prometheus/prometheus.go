@@ -20,10 +20,14 @@
 package prometheus
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/shirou/gopsutil/process"
-
+	"io"
+	"os"
 	"path/filepath"
+	"runtime"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/expfmt"
+	"github.com/shirou/gopsutil/process"
 )
 
 var labels = []string{
@@ -34,6 +38,21 @@ var labels = []string{
 }
 
 var (
+	// see https://www.robustperception.io/exposing-the-software-version-to-prometheus
+	version = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Namespace: "kubevirt",
+			Name:      "info",
+			Help:      "Version information",
+			ConstLabels: prometheus.Labels{
+				"branch":      "HEAD",
+				"goversion":   runtime.Version(),
+				"revision":    "",
+				"kubeversion": "",
+				"version":     "1",
+			},
+		},
+	)
 	cpuTimes = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: "kubevirt",
@@ -55,8 +74,47 @@ var (
 )
 
 func init() {
+	prometheus.MustRegister(version)
 	prometheus.MustRegister(cpuTimes)
 	prometheus.MustRegister(memoryAmount)
+
+	version.Set(1)
+}
+
+// fill the metrics with data about itself
+func autoFillMetrics() error {
+	proc, err := process.NewProcess(int32(os.Getpid()))
+	if err != nil {
+		return err
+	}
+	err = UpdateMetricsCPU("localhost", "init", proc)
+	if err != nil {
+		return err
+	}
+	err = UpdateMetricsMemory("localhost", "init", proc)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DumpMetrics(w io.Writer) error {
+	err := autoFillMetrics()
+	if err != nil {
+		return err
+	}
+
+	mfs, err := prometheus.DefaultGatherer.Gather()
+	if err != nil {
+		return err
+	}
+
+	for _, mf := range mfs {
+		if _, err := expfmt.MetricFamilyToText(w, mf); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func UpdateMetricsCPU(host, domain string, proc *process.Process) error {
