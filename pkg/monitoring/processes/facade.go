@@ -20,6 +20,7 @@
 package processes
 
 import (
+	"github.com/fromanirh/kube-metrics-collector/pkg/monitoring/processes/prometheus"
 	"github.com/fromanirh/kube-metrics-collector/pkg/procscanner"
 
 	"log"
@@ -35,7 +36,7 @@ func Collect(conf *Config, scanner procscanner.ProcScanner, interval time.Durati
 		return err
 	}
 
-	mon, err := NewDomainMonitor(conf.Hostname, finder)
+	mon, err := NewDomainMonitor(finder, &prometheus.MetricsUpdater{Host: conf.Hostname})
 	if err != nil {
 		return err
 	}

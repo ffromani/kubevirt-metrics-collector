@@ -19,23 +19,30 @@
 
 package processes
 
-import "github.com/fromanirh/kube-metrics-collector/pkg/monitoring/processes/prometheus"
+import (
+	"github.com/shirou/gopsutil/process"
+)
+
+type MetricsUpdater interface {
+	UpdateCPU(domain string, proc *process.Process) error
+	UpdateMemory(domain string, proc *process.Process) error
+}
 
 type Monitor interface {
 	Update() error
 }
 
 type DomainMonitor struct {
-	hostname  string
 	podFinder PodFinder
 	pods      map[string]*PodInfo
+	metrics   MetricsUpdater
 }
 
-func NewDomainMonitor(hostname string, podFinder PodFinder) (Monitor, error) {
+func NewDomainMonitor(podFinder PodFinder, metricsUpdater MetricsUpdater) (Monitor, error) {
 	dm := DomainMonitor{
-		hostname:  hostname,
 		podFinder: podFinder,
 		pods:      make(map[string]*PodInfo),
+		metrics:   metricsUpdater,
 	}
 	return &dm, nil
 }
@@ -55,12 +62,12 @@ func (dm *DomainMonitor) updateMetrics() error {
 	var err error
 	for podName, podInfo := range dm.pods {
 		for _, proc := range podInfo.Procs {
-			err = prometheus.UpdateMetricsCPU(dm.hostname, podName, proc)
+			err = dm.metrics.UpdateCPU(podName, proc)
 			if err != nil {
 				continue // TODO
 			}
 
-			err = prometheus.UpdateMetricsMemory(dm.hostname, podName, proc)
+			err = dm.metrics.UpdateMemory(podName, proc)
 			if err != nil {
 				continue // TODO
 			}

@@ -89,11 +89,12 @@ func autoFillMetrics() error {
 	if err != nil {
 		return err
 	}
-	err = UpdateMetricsCPU("localhost", "init", proc)
+	mu := MetricsUpdater{Host: "localhost"}
+	err = mu.UpdateCPU("init", proc)
 	if err != nil {
 		return err
 	}
-	err = UpdateMetricsMemory("localhost", "init", proc)
+	err = mu.UpdateMemory("init", proc)
 	if err != nil {
 		return err
 	}
@@ -119,7 +120,12 @@ func DumpMetrics(w io.Writer) error {
 	return nil
 }
 
-func UpdateMetricsCPU(host, domain string, proc *process.Process) error {
+type MetricsUpdater struct {
+	// hopefully doesn't change during the lifetime of the updater!
+	Host string
+}
+
+func (mu *MetricsUpdater) UpdateCPU(domain string, proc *process.Process) error {
 	name, err := extractProcName(proc)
 	if err != nil {
 		return err
@@ -130,13 +136,13 @@ func UpdateMetricsCPU(host, domain string, proc *process.Process) error {
 		return err
 	}
 
-	cpuTimes.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "user"}).Set(times.User)
-	cpuTimes.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "system"}).Set(times.System)
+	cpuTimes.With(prometheus.Labels{"host": mu.Host, "domain": domain, "name": name, "type": "user"}).Set(times.User)
+	cpuTimes.With(prometheus.Labels{"host": mu.Host, "domain": domain, "name": name, "type": "system"}).Set(times.System)
 
 	return nil
 }
 
-func UpdateMetricsMemory(host, domain string, proc *process.Process) error {
+func (mu *MetricsUpdater) UpdateMemory(domain string, proc *process.Process) error {
 	name, err := extractProcName(proc)
 	if err != nil {
 		return err
@@ -147,10 +153,10 @@ func UpdateMetricsMemory(host, domain string, proc *process.Process) error {
 		return err
 	}
 
-	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "virtual"}).Set(float64(memInfo.VMS))
-	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "resident"}).Set(float64(memInfo.RSS))
-	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "shared"}).Set(float64(memInfo.Shared))
-	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "dirty"}).Set(float64(memInfo.Dirty))
+	memoryAmount.With(prometheus.Labels{"host": mu.Host, "domain": domain, "name": name, "type": "virtual"}).Set(float64(memInfo.VMS))
+	memoryAmount.With(prometheus.Labels{"host": mu.Host, "domain": domain, "name": name, "type": "resident"}).Set(float64(memInfo.RSS))
+	memoryAmount.With(prometheus.Labels{"host": mu.Host, "domain": domain, "name": name, "type": "shared"}).Set(float64(memInfo.Shared))
+	memoryAmount.With(prometheus.Labels{"host": mu.Host, "domain": domain, "name": name, "type": "dirty"}).Set(float64(memInfo.Dirty))
 	return nil
 }
 
