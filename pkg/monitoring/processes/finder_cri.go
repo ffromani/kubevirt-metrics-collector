@@ -20,7 +20,6 @@
 package processes
 
 import (
-	"github.com/shirou/gopsutil/process"
 	"google.golang.org/grpc"
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 	"k8s.io/kubernetes/pkg/kubelet/util"
@@ -73,7 +72,7 @@ func NewCRIPodFinder(runtimeEndPoint string, timeout time.Duration, scanner proc
 
 func (cpf *CRIPodFinder) FindPods() (map[string]*PodInfo, error) {
 	var err error
-	pods := make(map[string]*PodInfo)
+	pods := make(PodMap)
 
 	procs, err := cpf.scanner.Scan(cpf.ProcDir)
 	if err != nil {
@@ -84,29 +83,7 @@ func (cpf *CRIPodFinder) FindPods() (map[string]*PodInfo, error) {
 		return pods, err
 	}
 
-	for _, pids := range procs {
-		for _, pid := range pids {
-			podName, err := cpf.FindPodByPID(pid)
-			if err != nil {
-				continue // TODO: log
-			}
-
-			podInfo, ok := pods[podName]
-			if !ok {
-				podInfo = &PodInfo{}
-				pods[podName] = podInfo
-			}
-
-			proc, err := process.NewProcess(pid)
-			if err != nil {
-				continue // TODO: log
-			}
-
-			podInfo.Procs = append(podInfo.Procs, proc)
-		}
-	}
-
-	return pods, nil
+	return pods.MapProcsToPods(cpf, procs)
 }
 
 func (cpf *CRIPodFinder) updateCRIInfo() error {

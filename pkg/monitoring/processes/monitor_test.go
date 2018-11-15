@@ -36,6 +36,11 @@ type NullUpdater struct {
 	Memory []procInfo
 }
 
+func (nu *NullUpdater) Reset() {
+	nu.CPU = []procInfo{}
+	nu.Memory = []procInfo{}
+}
+
 func (nu *NullUpdater) UpdateCPU(domain string, proc *process.Process) error {
 	exe, err := proc.Exe()
 	if err != nil {
@@ -60,24 +65,32 @@ func (nu *NullUpdater) UpdateMemory(domain string, proc *process.Process) error 
 	return nil
 }
 
-type SelfScanner struct{}
+type SelfScanner struct {
+	Skip bool
+}
 
-func (sc SelfScanner) FindPods() (map[string]*PodInfo, error) {
+func (sc *SelfScanner) FindPods() (map[string]*PodInfo, error) {
 	ret := make(map[string]*PodInfo)
-	pi := PodInfo{}
-	proc, err := process.NewProcess(int32(os.Getpid()))
-	if err != nil {
-		return ret, err
-	}
+	if !sc.Skip {
+		pi := PodInfo{}
+		proc, err := process.NewProcess(int32(os.Getpid()))
+		if err != nil {
+			return ret, err
+		}
 
-	pi.Procs = append(pi.Procs, proc)
-	ret["self"] = &pi
+		pi.Procs = append(pi.Procs, proc)
+		ret["self"] = &pi
+	}
 	return ret, nil
+}
+
+func (sc *SelfScanner) FindPodByPID(pid int32) (string, error) {
+	return "selfPod", nil
 }
 
 func TestUpdateHappyPath(t *testing.T) {
 	nu := &NullUpdater{}
-	mon, err := NewDomainMonitor(SelfScanner{}, nu)
+	mon, err := NewDomainMonitor(&SelfScanner{}, nu)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 		return
@@ -94,4 +107,42 @@ func TestUpdateHappyPath(t *testing.T) {
 	if len(nu.Memory) != 1 {
 		t.Errorf("unexpected Memory updates: %#v", nu.Memory)
 	}
+}
+
+func TestUpdatePodDisappears(t *testing.T) {
+	nu := &NullUpdater{}
+	sc := &SelfScanner{}
+	mon, err := NewDomainMonitor(sc, nu)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+		return
+	}
+
+	err = mon.Update()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+		return
+	}
+	if len(nu.CPU) != 1 {
+		t.Errorf("unexpected CPU updates: %#v", nu.CPU)
+	}
+	if len(nu.Memory) != 1 {
+		t.Errorf("unexpected Memory updates: %#v", nu.Memory)
+	}
+
+	nu.Reset()
+	sc.Skip = true
+
+	err = mon.Update()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+		return
+	}
+	if len(nu.CPU) != 0 {
+		t.Errorf("unexpected CPU updates: %#v", nu.CPU)
+	}
+	if len(nu.Memory) != 0 {
+		t.Errorf("unexpected Memory updates: %#v", nu.Memory)
+	}
+
 }
