@@ -1,4 +1,5 @@
-VERSIONFILE := internal/pkg/version/version.go
+VERSIONDIR := internal/pkg/version
+VERSIONFILE := $(VERSIONDIR)/version.go
 
 all: binary
 
@@ -18,7 +19,7 @@ clean:
 	rm -f cmd/kube-metrics-collector/kube-metrics-collector
 
 gensrc:
-	@./genver.sh > $(VERSIONFILE)
+	@mkdir -p $(VERSIONDIR) && ./genver.sh > $(VERSIONFILE)
 
 .PHONY: all docker binary clean
 
