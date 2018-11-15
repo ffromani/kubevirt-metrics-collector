@@ -33,10 +33,10 @@ import (
 )
 
 var labels = []string{
-	"host",   //  On which host is the domain running?
-	"domain", // Which domain the process belongs to?
-	"name",   // What's the process?
-	"type",   // what are we measuring?
+	"host",    // On which host is the domain running?
+	"domain",  // Which domain the process belongs to?
+	"process", // What's the process?
+	"type",    // what are we measuring?
 }
 
 var (
@@ -58,18 +58,18 @@ var (
 	cpuTimes = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: "kubevirt",
-			Subsystem: "process_cpu",
-			Name:      "seconds_total",
-			Help:      "Amount spent, seconds.",
+			Subsystem: "pod_infra",
+			Name:      "cpu_seconds_total",
+			Help:      "CPU time spent, seconds.",
 		},
 		labels,
 	)
 	memoryAmount = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: "kubevirt",
-			Subsystem: "process_memory",
-			Name:      "amount_bytes",
-			Help:      "Amount of memory, bytes.",
+			Subsystem: "pod_infra",
+			Name:      "memory_amount_bytes",
+			Help:      "Memory amount, bytes.",
 		},
 		labels,
 	)
@@ -126,7 +126,7 @@ type MetricsUpdater struct {
 }
 
 func (mu *MetricsUpdater) UpdateCPU(domain string, proc *process.Process) error {
-	name, err := extractProcName(proc)
+	process, err := extractProcName(proc)
 	if err != nil {
 		return err
 	}
@@ -136,14 +136,14 @@ func (mu *MetricsUpdater) UpdateCPU(domain string, proc *process.Process) error 
 		return err
 	}
 
-	cpuTimes.With(prometheus.Labels{"host": mu.Host, "domain": domain, "name": name, "type": "user"}).Set(times.User)
-	cpuTimes.With(prometheus.Labels{"host": mu.Host, "domain": domain, "name": name, "type": "system"}).Set(times.System)
+	cpuTimes.With(prometheus.Labels{"host": mu.Host, "domain": domain, "process": process, "type": "user"}).Set(times.User)
+	cpuTimes.With(prometheus.Labels{"host": mu.Host, "domain": domain, "process": process, "type": "system"}).Set(times.System)
 
 	return nil
 }
 
 func (mu *MetricsUpdater) UpdateMemory(domain string, proc *process.Process) error {
-	name, err := extractProcName(proc)
+	process, err := extractProcName(proc)
 	if err != nil {
 		return err
 	}
@@ -153,10 +153,10 @@ func (mu *MetricsUpdater) UpdateMemory(domain string, proc *process.Process) err
 		return err
 	}
 
-	memoryAmount.With(prometheus.Labels{"host": mu.Host, "domain": domain, "name": name, "type": "virtual"}).Set(float64(memInfo.VMS))
-	memoryAmount.With(prometheus.Labels{"host": mu.Host, "domain": domain, "name": name, "type": "resident"}).Set(float64(memInfo.RSS))
-	memoryAmount.With(prometheus.Labels{"host": mu.Host, "domain": domain, "name": name, "type": "shared"}).Set(float64(memInfo.Shared))
-	memoryAmount.With(prometheus.Labels{"host": mu.Host, "domain": domain, "name": name, "type": "dirty"}).Set(float64(memInfo.Dirty))
+	memoryAmount.With(prometheus.Labels{"host": mu.Host, "domain": domain, "process": process, "type": "virtual"}).Set(float64(memInfo.VMS))
+	memoryAmount.With(prometheus.Labels{"host": mu.Host, "domain": domain, "process": process, "type": "resident"}).Set(float64(memInfo.RSS))
+	memoryAmount.With(prometheus.Labels{"host": mu.Host, "domain": domain, "process": process, "type": "shared"}).Set(float64(memInfo.Shared))
+	memoryAmount.With(prometheus.Labels{"host": mu.Host, "domain": domain, "process": process, "type": "dirty"}).Set(float64(memInfo.Dirty))
 	return nil
 }
 

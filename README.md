@@ -1,22 +1,18 @@
-kube-metrics-collector
-======================
+# kube-metrics-collector
 
 kube-metrics-collector is a [kubevirt](http://kubevirt.io) addon that watches the processes used by `virt-launcher` to run VMs, and report their usage consumption (CPU, memory).
 
-License
-=======
+## License
 
 Apache v2
 
-Dependencies
-============
+## Dependencies
 
 * [gopsutil](https://github.com/shirou/gopsutil)
 * [kubernetes APIs](https://github.com/kubernetes/kubernetes)
 
 
-Installation: kubernetes/kubevirt cluster
-=========================================
+## Installation: kubernetes/kubevirt cluster
 
 This project can be deployed in a kubevirt cluster to report metrics about processes running inside PODs.
 You may use this to monitor the resource consumption of these infrastructure processes for VM-based workloads.
@@ -79,24 +75,37 @@ kubectl create -f cluster/kube-service-monitor-vmi.yaml
 
 Please check the next sections for Caveats.
 
-Supported metrics
-=================
+## Exposed metrics
 
-You can learn the metrics exposed by `kube-metrics-collector` without deploying in your cluster, using the `-M` flag of the server. Example:
+`kube-metrics-collector` exposes metrics about the resource consumption of the infrastructural processes which make it possible
+to run VMs inside PODs. The intended usage of those metrics is for development, troubleshooting, optimization. In the day-to-day
+scenario, you should not worry about those metrics.
+
+### Metrics naming conventions
+
+`kube-metrics collector` use a naming scheme as similar as possible to the [node_exporter](https://github.com/prometheus/node_exporter);
+if the purpose of a metric allows that, we try to use an identical name; otherwise, we aim to be as close as possible.
+
+The server exposes the metrics in the `kubevirt` namespace, in the `pod_infra` subsystem. See the [full definition here](https://github.com/fromanirh/kube-metrics-collector/blob/master/pkg/monitoring/processes/prometheus/prometheus.go#L42)
+
+The metrics are versioned following [these recommendations](https://www.robustperception.io/exposing-the-software-version-to-prometheus).
+
+### Metrics listing
+
+You can learn about all the metrics exposed by `kube-metrics-collector` without deploying in your cluster, using the `-M` flag of the server.
+Example:
 ```bash
 $ ./cmd/kube-metrics-collector/kube-metrics-collector -M 2>&1 | grep -v '^#' | grep kube
-kubevirt_info{branch="master",goversion="go1.10.4",kubeversion="0.9.1",revision="f2a62fa",version="1"} 1
-kubevirt_process_cpu_seconds_total{domain="init",host="localhost",name="kube-metrics-collector",type="system"} 0
-kubevirt_process_cpu_seconds_total{domain="init",host="localhost",name="kube-metrics-collector",type="user"} 0
-kubevirt_process_memory_amount_bytes{domain="init",host="localhost",name="kube-metrics-collector",type="dirty"} 6.4933888e+07
-kubevirt_process_memory_amount_bytes{domain="init",host="localhost",name="kube-metrics-collector",type="resident"} 1.1931648e+07
-kubevirt_process_memory_amount_bytes{domain="init",host="localhost",name="kube-metrics-collector",type="shared"} 1.015808e+07
-kubevirt_process_memory_amount_bytes{domain="init",host="localhost",name="kube-metrics-collector",type="virtual"} 5.5625728e+08
+kubevirt_info{branch="master",goversion="go1.10.5",kubeversion="0.9.1",revision="566d93d",version="1"} 1
+kubevirt_pod_infra_cpu_seconds_total{domain="init",host="localhost",process="kube-metrics-collector",type="system"} 0
+kubevirt_pod_infra_cpu_seconds_total{domain="init",host="localhost",process="kube-metrics-collector",type="user"} 0
+kubevirt_pod_infra_memory_amount_bytes{domain="init",host="localhost",process="kube-metrics-collector",type="dirty"} 5.6410112e+07
+kubevirt_pod_infra_memory_amount_bytes{domain="init",host="localhost",process="kube-metrics-collector",type="resident"} 1.2054528e+07
+kubevirt_pod_infra_memory_amount_bytes{domain="init",host="localhost",process="kube-metrics-collector",type="shared"} 1.009664e+07
+kubevirt_pod_infra_memory_amount_bytes{domain="init",host="localhost",process="kube-metrics-collector",type="virtual"} 4.80759808e+08
 ```
 
-
-Notes about integration with kubernetes/kubevirt
-================================================
+## Notes about integration with kubernetes/kubevirt
 
 Please be aware that in order to resolve the PIDs to meaningful VM domain names, procwatch **needs to access the CRI socket on the host**.
 This is equivalent of exposing the docker socket inside the container. This may or may not be an issue on your cluster setup.
