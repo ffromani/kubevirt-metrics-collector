@@ -58,8 +58,8 @@ var (
 	cpuTimes = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: "kubevirt",
-			Subsystem: "cpu_times",
-			Name:      "time_seconds",
+			Subsystem: "process_cpu",
+			Name:      "seconds_total",
 			Help:      "Amount spent, seconds.",
 		},
 		labels,
@@ -68,8 +68,8 @@ var (
 		prometheus.GaugeOpts{
 			Namespace: "kubevirt",
 			Subsystem: "process_memory",
-			Name:      "amount_kib",
-			Help:      "Amount of memory, KiB.",
+			Name:      "amount_bytes",
+			Help:      "Amount of memory, bytes.",
 		},
 		labels,
 	)
@@ -147,10 +147,10 @@ func UpdateMetricsMemory(host, domain string, proc *process.Process) error {
 		return err
 	}
 
-	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "virtual"}).Set(float64(memInfo.VMS / 1024.))
-	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "resident"}).Set(float64(memInfo.RSS / 1024.))
-	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "shared"}).Set(float64(memInfo.Shared / 1024.))
-	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "dirty"}).Set(float64(memInfo.Dirty / 1024.))
+	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "virtual"}).Set(float64(memInfo.VMS))
+	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "resident"}).Set(float64(memInfo.RSS))
+	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "shared"}).Set(float64(memInfo.Shared))
+	memoryAmount.With(prometheus.Labels{"host": host, "domain": domain, "name": name, "type": "dirty"}).Set(float64(memInfo.Dirty))
 	return nil
 }
 
