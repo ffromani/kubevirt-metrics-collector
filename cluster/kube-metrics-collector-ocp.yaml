@@ -20,7 +20,7 @@ spec:
       nodeSelector:
         node-role.kubernetes.io/infra: "true"
       containers:
-      - name: collectd
+      - name: collector
         ports:
         - containerPort: 9091
           protocol: "TCP"
@@ -28,17 +28,17 @@ spec:
         image: fromanirh/kube-metrics-collector:v0.9.1
         imagePullPolicy: IfNotPresent
         volumeMounts:
-        - name: collectd-config
-          mountPath: /etc/collectd
+        - name: kube-metrics-config
+          mountPath: /etc/kube-metrics-collector
         - name: cri-runtime
           mountPath: /var/run/dockershim.sock
       volumes:
-      - name: collectd-config
+      - name: kube-metrics-config
         configMap:
-          name: collectd-config
+          name: kube-metrics-config
           items:
-          - key: node-collectd.conf
-            path: collectd.conf
+          - key: collector.conf
+            path: config.json
       - name: cri-runtime
         hostPath:
           path: /var/run/dockershim.sock

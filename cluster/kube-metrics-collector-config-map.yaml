@@ -1,23 +1,18 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: collectd-config
+  name: kube-metrics-config
   namespace: kube-system
 data:
-  node-collectd.conf: |-
-    LoadPlugin syslog
-    <Plugin syslog>
-       LogLevel info
-    </Plugin>
-    LoadPlugin write_prometheus
-    <Plugin "write_prometheus">
-      Port "9091"
-    </Plugin>
-    LoadPlugin unixsock
-    <Plugin unixsock>
-      SocketFile "/var/run/collectd.sock"
-      SocketPerms "0700"
-      DeleteSocket true
-    </Plugin>
-
-    # Last line to make the collectd parser happy
+  {
+    "criendpoint": "unix:///var/run/dockershim.sock",
+    "listenaddress": ":9091",
+    "interval": "5s",
+    "targets": [{
+      "name": "libvirt",
+      "argv": ["/usr/sbin/libvirtd*"]
+    }, {
+      "name": "qemu",
+      "argv": ["/usr/*/qemu*"]
+    }]
+  }

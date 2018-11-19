@@ -8,7 +8,8 @@ RUN \
     procps-ng curl less && \
   dnf clean all
 
-COPY cluster/kube-metrics-collector.json /etc/kube-metrics-collector.json
+MKDIR /etc/kube-metrics-collector
+COPY cluster/kube-metrics-collector.json /etc/kube-metrics-collector/config.json
 COPY cmd/kube-metrics-collector/kube-metrics-collector /usr/sbin/kube-metrics-collector
 COPY cluster/entrypoint.sh /entrypoint.sh
 
