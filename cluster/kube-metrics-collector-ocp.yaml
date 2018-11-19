@@ -25,7 +25,7 @@ spec:
         - containerPort: 9091
           protocol: "TCP"
           name: "metrics-vmi"
-        image: fromanirh/kube-metrics-collector:v0.9.1
+        image: fromanirh/kube-metrics-collector:v0.10.0
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: kube-metrics-config
