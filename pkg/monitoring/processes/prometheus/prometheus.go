@@ -161,9 +161,9 @@ func (mu *MetricsUpdater) UpdateMemory(domain string, proc *process.Process) err
 }
 
 func extractProcName(proc *process.Process) (string, error) {
-	exe, err := proc.Exe()
-	if err != nil {
+	cmdline, err := proc.CmdlineSlice()
+	if err != nil || len(cmdline) < 1 {
 		return "", err
 	}
-	return filepath.Base(exe), nil
+	return filepath.Base(cmdline[0]), nil
 }
