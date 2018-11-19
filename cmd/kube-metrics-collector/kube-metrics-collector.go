@@ -62,9 +62,9 @@ func main() {
 		return
 	}
 
-	conf, err := processes.NewConfigFromFile(os.Args[0])
+	conf, err := processes.NewConfigFromFile(args[0])
 	if err != nil {
-		log.Fatalf("error reading the configuration file %s: %v", os.Args[0], err)
+		log.Fatalf("error reading the configuration file %s: %v", args[0], err)
 	}
 
 	conf.Interval = *intervalString
