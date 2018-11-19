@@ -19,12 +19,13 @@ You may use this to monitor the resource consumption of these infrastructure pro
 We assume that the cluster is running [prometheus-operator](https://github.com/coreos/prometheus-operator/blob/master/Documentation/user-guides/getting-started.md) to manage the monitoring using prometheus,
 and [kubevirt](https://github.com/kubevirt/kubevirt/releases/tag/v0.9.1) >= 0.9.1, which includes itself better integration with prometheus operator.
 
-0. First deploy a new service to plug in the configuration KubeVirt uses to interact with prometheus-operator:
+### Deploy a new service to plug in the configuration KubeVirt uses to interact with prometheus-operator:
+Just use the provided manifest:
 ```
 kubectl create -f cluster/kube-service-vmi.yaml
 ```
 
-1. Now deploy the tool itself into the cluster:
+### Deploy the server itself into the cluster:
 Set PLATFORM to either "k8s" or "ocp" and
 ```
 kubectl create -f cluster/kube-metrics-collector-config-map.yaml
@@ -33,9 +34,10 @@ kubectl create -f cluster/kube-metrics-collector-$PLATFORM.yaml
 
 TODO: add template
 
-2. procwatch installs a new deployment in the `kube-system` namespace. VM pods usually run in the `default` namespace.
-This may make the prometheus server unable to scrape the metrics endpoint.
-procwatch added. To fix this, deploy your prometheus server in your cluster like this:
+### Fix namespace mismatch (optional)
+`kube-metrics-collector` uses a deployment in the `kube-system` namespace. VM pods usually run in the `default` namespace.
+This may make the prometheus server unable to scrape the metrics endpoint that `kube-metrics-collector` added.
+To fix this, deploy your prometheus server in your cluster like this:
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: Prometheus
@@ -56,7 +58,9 @@ spec:
 ```
 Note the usage of `serviceMonitorNamespaceSelector`. [See here for more details](https://github.com/coreos/prometheus-operator/issues/1331)
 
-3. Now, you may need to add labels to the namespaces, like kube-system. Here's an example of how it could look like:
+### Add labels to the namespaces
+This step depends on how you are running your cluster. As per kubevirt 0.10.z, if you using the `kube-system` namespace (by default it is so), you need to perform this step.
+Here's an example of how it could look like:
 ```yaml
 apiVersion: v1
 kind: Namespace
@@ -68,12 +72,12 @@ metadata:
 ...
 ```
 
-3. The last step: now you need to deploy a `Service Monitor` to let `prometheus-operator` pickup and add rules for this endpoint:
+### Deploy a `Service Monitor`
+This is the last step. You need this  to let `prometheus-operator` pickup and add rules for this endpoint.
+Just use the provided manifest:
 ```
 kubectl create -f cluster/kube-service-monitor-vmi.yaml
 ```
-
-Please check the next sections for Caveats.
 
 ## Exposed metrics
 
@@ -112,3 +116,7 @@ This is equivalent of exposing the docker socket inside the container. This may 
 
 If you disable the CRI socket access, procwatch will just report the PIDs of the monitored processes.
 
+
+## Caveats & Gotchas
+
+content pending
