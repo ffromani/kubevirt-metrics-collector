@@ -4,15 +4,16 @@ metadata:
   name: kube-metrics-config
   namespace: kube-system
 data:
-  {
-    "criendpoint": "unix:///var/run/dockershim.sock",
-    "listenaddress": ":9091",
-    "interval": "5s",
-    "targets": [{
-      "name": "libvirt",
-      "argv": ["/usr/sbin/libvirtd*"]
-    }, {
-      "name": "qemu",
-      "argv": ["/usr/*/qemu*"]
-    }]
-  }
+  collector.conf: |-
+    {
+      "criendpoint": "unix:///var/run/dockershim.sock",
+      "listenaddress": ":9091",
+      "interval": "5s",
+      "targets": [{
+        "name": "libvirt",
+        "argv": ["/usr/sbin/libvirtd*"]
+      }, {
+        "name": "qemu",
+        "argv": ["/usr/*/qemu*"]
+      }]
+    }
