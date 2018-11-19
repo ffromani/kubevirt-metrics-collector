@@ -21,6 +21,7 @@ package processes
 
 import (
 	"github.com/shirou/gopsutil/process"
+	"log"
 )
 
 type MetricsUpdater interface {
@@ -60,26 +61,31 @@ func (dm *DomainMonitor) Update() error {
 
 func (dm *DomainMonitor) updateMetrics() error {
 	var err error
+	updated := 0
 	for podName, podInfo := range dm.pods {
 		for _, proc := range podInfo.Procs {
 			err = dm.metrics.UpdateCPU(podName, proc)
 			if err != nil {
-				continue // TODO
+				log.Printf("failed to update CPU for pod %v: %v", podName, err)
+				continue
 			}
 
 			err = dm.metrics.UpdateMemory(podName, proc)
 			if err != nil {
-				continue // TODO
+				log.Printf("failed to update Memory for pod %v: %v", podName, err)
+				continue
 			}
+			updated++
 		}
 	}
-
+	log.Printf("updated metrics for %v pods", updated)
 	return nil
 }
 
 func (dm *DomainMonitor) refreshPods() error {
 	pods, err := dm.podFinder.FindPods()
 	if err != nil {
+		log.Printf("error finding available pods: %v", err)
 		return err
 	}
 
@@ -102,5 +108,6 @@ func (dm *DomainMonitor) refreshPods() error {
 		dm.pods[name] = podInfo
 	}
 
+	log.Printf("refreshed %v pods", len(dm.pods))
 	return nil
 }

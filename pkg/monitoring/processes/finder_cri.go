@@ -76,10 +76,12 @@ func (cpf *CRIPodFinder) FindPods() (map[string]*PodInfo, error) {
 
 	procs, err := cpf.scanner.Scan(cpf.ProcDir)
 	if err != nil {
+		log.Printf("error scanning for pods in %v: %v", cpf.ProcDir, err)
 		return pods, err
 	}
 	err = cpf.updateCRIInfo()
 	if err != nil {
+		log.Printf("error updating CRI infos: %v", err)
 		return pods, err
 	}
 
@@ -121,7 +123,6 @@ func (cpf *CRIPodFinder) updateInfoContainers() error {
 	for _, c := range r.GetContainers() {
 		cpf.containerToPod[c.Id] = c.PodSandboxId
 	}
-	log.Printf("found: %v containers", len(cpf.containerToPod))
 
 	return nil
 }
@@ -150,7 +151,6 @@ func (cpf *CRIPodFinder) updateInfoPods() error {
 			cpf.podInfos[p.Id] = p.Metadata.Name
 		}
 	}
-	log.Printf("found: %v pods", len(cpf.podInfos))
 
 	return nil
 }
