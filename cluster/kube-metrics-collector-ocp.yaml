@@ -32,6 +32,11 @@ spec:
           mountPath: /etc/kube-metrics-collector
         - name: cri-runtime
           mountPath: /var/run/dockershim.sock
+        env:
+        - name: KUBE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
       volumes:
       - name: kube-metrics-config
         configMap:

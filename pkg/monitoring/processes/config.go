@@ -76,9 +76,12 @@ func (c *Config) Validate() error {
 	}
 	if c.Hostname == "" {
 		var err error
-		c.Hostname, err = os.Hostname()
-		if err != nil {
-			return errors.New(fmt.Sprintf("error getting the host name: %s", err))
+		c.Hostname = os.Getenv("KUBE_NODE_NAME")
+		if c.Hostname == "" {
+			c.Hostname, err = os.Hostname()
+			if err != nil {
+				return errors.New(fmt.Sprintf("error getting the host name: %s", err))
+			}
 		}
 	}
 	// noone really cares about DebugMode
