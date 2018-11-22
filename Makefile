@@ -7,7 +7,10 @@ docker: binary
 	docker build .
 
 dockertag: binary
-	docker build -t fromanirh/kube-metrics-collector:devel .
+	./hack/dockertag.sh
+
+dockerpush: binary
+	./hack/dockerpush.sh
 
 vendor:
 	dep ensure
@@ -19,7 +22,7 @@ clean:
 	rm -f cmd/kube-metrics-collector/kube-metrics-collector
 
 gensrc:
-	@mkdir -p $(VERSIONDIR) && ./genver.sh > $(VERSIONFILE)
+	@mkdir -p $(VERSIONDIR) && ./hack/genver.sh > $(VERSIONFILE)
 
-.PHONY: all docker binary clean
+.PHONY: all docker dockertag dockerpush binary clean
 
