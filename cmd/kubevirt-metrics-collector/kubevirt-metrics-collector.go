@@ -23,9 +23,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	flag "github.com/spf13/pflag"
 
-	"github.com/fromanirh/kube-metrics-collector/pkg/monitoring/processes"
-	promlocal "github.com/fromanirh/kube-metrics-collector/pkg/monitoring/processes/prometheus"
-	"github.com/fromanirh/kube-metrics-collector/pkg/procscanner"
+	"github.com/fromanirh/kubevirt-metrics-collector/pkg/monitoring/processes"
+	promlocal "github.com/fromanirh/kubevirt-metrics-collector/pkg/monitoring/processes/prometheus"
+	"github.com/fromanirh/kubevirt-metrics-collector/pkg/procscanner"
 
 	"fmt"
 	"log"
@@ -36,7 +36,7 @@ import (
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s /path/to/kube-metrics-collector.json\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "usage: %s /path/to/kubevirt-metrics-collector.json\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 	intervalString := flag.StringP("interval", "I", processes.DefaultInterval, "metrics collection interval")
@@ -90,8 +90,8 @@ func main() {
 		return
 	}
 
-	log.Printf("kube-metrics-collector started")
-	defer log.Printf("kube-metrics-collector stopped")
+	log.Printf("kubevirt-metrics-collector started")
+	defer log.Printf("kubevirt-metrics-collector stopped")
 
 	go processes.Collect(conf, scanner, interval)
 

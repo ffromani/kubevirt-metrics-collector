@@ -29,7 +29,7 @@ import (
 	"github.com/prometheus/common/expfmt"
 	"github.com/shirou/gopsutil/process"
 
-	verinfo "github.com/fromanirh/kube-metrics-collector/internal/pkg/version"
+	verinfo "github.com/fromanirh/kubevirt-metrics-collector/internal/pkg/version"
 )
 
 var labels = []string{

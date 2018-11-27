@@ -20,7 +20,7 @@
 package processes
 
 import (
-	"github.com/fromanirh/kube-metrics-collector/pkg/procscanner"
+	"github.com/fromanirh/kubevirt-metrics-collector/pkg/procscanner"
 
 	"encoding/json"
 	"errors"

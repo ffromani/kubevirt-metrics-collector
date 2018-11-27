@@ -24,7 +24,7 @@ import (
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 	"k8s.io/kubernetes/pkg/kubelet/util"
 
-	"github.com/fromanirh/kube-metrics-collector/pkg/procscanner"
+	"github.com/fromanirh/kubevirt-metrics-collector/pkg/procscanner"
 
 	"context"
 	"errors"

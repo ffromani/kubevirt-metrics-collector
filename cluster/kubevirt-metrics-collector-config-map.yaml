@@ -1,7 +1,7 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: kube-metrics-config
+  name: kubevirt-metrics-config
   namespace: kube-system
 data:
   collector.conf: |-

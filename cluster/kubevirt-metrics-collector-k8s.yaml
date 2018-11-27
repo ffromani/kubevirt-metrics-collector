@@ -1,15 +1,15 @@
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
-  name: kube-metrics-collector
+  name: kubevirt-metrics-collector
   namespace: kube-system
   labels:
-    app: kube-metrics-collector
+    app: kubevirt-metrics-collector
 spec:
   template:
     metadata:
       labels:
-        name: kube-metrics-collector
+        name: kubevirt-metrics-collector
         vmi.prometheus.kubevirt.io: ""
       annotations:
         prometheus.io/scrape: "true"
@@ -25,11 +25,11 @@ spec:
         - containerPort: 9091
           protocol: "TCP"
           name: "metrics-vmi"
-        image: fromanirh/kube-metrics-collector:v0.10.1
+        image: fromanirh/kubevirt-metrics-collector:v0.10.0.2
         imagePullPolicy: IfNotPresent
         volumeMounts:
-        - name: kube-metrics-config
-          mountPath: /etc/kube-metrics-collector
+        - name: kubevirt-metrics-config
+          mountPath: /etc/kubevirt-metrics-collector
         - name: cri-runtime
           mountPath: /var/run/dockershim.sock
         env:
@@ -38,9 +38,9 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
       volumes:
-      - name: kube-metrics-config
+      - name: kubevirt-metrics-config
         configMap:
-          name: kube-metrics-config
+          name: kubevirt-metrics-config
           items:
           - key: collector.conf
             path: config.json

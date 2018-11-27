@@ -23,7 +23,7 @@ _testmain.go
 *.test
 *.prof
 
-cmd/kube-metrics-collector/kube-metrics-collector
+cmd/kubevirt-metrics-collector/kubevirt-metrics-collector
 Gopkg.lock
 vendor/
 tags

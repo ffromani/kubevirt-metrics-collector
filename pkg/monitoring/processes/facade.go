@@ -20,8 +20,8 @@
 package processes
 
 import (
-	"github.com/fromanirh/kube-metrics-collector/pkg/monitoring/processes/prometheus"
-	"github.com/fromanirh/kube-metrics-collector/pkg/procscanner"
+	"github.com/fromanirh/kubevirt-metrics-collector/pkg/monitoring/processes/prometheus"
+	"github.com/fromanirh/kubevirt-metrics-collector/pkg/procscanner"
 
 	"log"
 	"time"

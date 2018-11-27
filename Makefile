@@ -16,10 +16,10 @@ vendor:
 	dep ensure
 
 binary: vendor gensrc
-	cd cmd/kube-metrics-collector && go build -v .
+	cd cmd/kubevirt-metrics-collector && go build -v .
 
 clean:
-	rm -f cmd/kube-metrics-collector/kube-metrics-collector
+	rm -f cmd/kubevirt-metrics-collector/kubevirt-metrics-collector
 
 gensrc:
 	@mkdir -p $(VERSIONDIR) && ./hack/genver.sh > $(VERSIONFILE)

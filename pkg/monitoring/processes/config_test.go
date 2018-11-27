@@ -22,7 +22,7 @@ package processes
 import (
 	"testing"
 
-	"github.com/fromanirh/kube-metrics-collector/pkg/procscanner"
+	"github.com/fromanirh/kubevirt-metrics-collector/pkg/procscanner"
 )
 
 func TestConfigInvalidByDefault(t *testing.T) {

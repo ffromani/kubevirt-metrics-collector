@@ -2,4 +2,4 @@
 
 set -xe
 
-/usr/sbin/kube-metrics-collector /etc/kube-metrics-collector/config.json
+/usr/sbin/kubevirt-metrics-collector /etc/kubevirt-metrics-collector/config.json
