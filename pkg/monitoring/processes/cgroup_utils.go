@@ -27,6 +27,7 @@ import (
 	"strings"
 )
 
+// Classifiers for CGroup found
 const (
 	MissingCGroup = iota
 	MalformedCGroup
@@ -34,6 +35,9 @@ const (
 	DockerCGroup
 )
 
+// FindContainerIDByCGroup fetches cgroup information for the given PID
+// Returns the cgroup name and the CGroup classifier
+// Should the pid belong to more than one cgroup: returns the first one, in kernel order.
 func FindContainerIDByCGroup(pid int32) (string, int) {
 	return parseProcCGroupEntry(fmt.Sprintf("/proc/%d/cgroup", pid))
 }

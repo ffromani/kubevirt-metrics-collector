@@ -30,9 +30,10 @@ import (
 )
 
 const (
-	DefaultInterval = "5s"
+	DefaultInterval = "5s" // Polling interval
 )
 
+// Config encodes the configuration of the monitoring package
 type Config struct {
 	Targets       []procscanner.ProcTarget `json:"targets"`
 	ListenAddress string                   `json:"listenaddress"`
@@ -42,12 +43,15 @@ type Config struct {
 	DebugMode     bool                     `json:"debugmode"`
 }
 
+// NewConfig creates a new Config object with the current defaults
 func NewConfig() *Config {
 	return &Config{
 		Interval: DefaultInterval,
 	}
 }
 
+// NewConfigFromFile creates a new Config object with the settings taken from the given file.
+// Should the file not specify a setting, the value is the default one (see NewCOnfig)
 func NewConfigFromFile(confFile string) (*Config, error) {
 	conf := NewConfig()
 
@@ -59,6 +63,7 @@ func NewConfigFromFile(confFile string) (*Config, error) {
 	return conf, nil
 }
 
+// Validate returns nil if the current configuration is consistent and legal, an error otherwise
 func (c *Config) Validate() error {
 	// mandatory
 	if len(c.Targets) == 0 {
