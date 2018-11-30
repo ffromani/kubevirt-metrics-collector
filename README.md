@@ -2,6 +2,8 @@
 
 kubevirt-metrics-collector is a [kubevirt](http://kubevirt.io) addon that watches the processes used by `virt-launcher` to run VMs, and report their usage consumption (CPU, memory).
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/fromanirh/kubevirt-metrics-collector)](https://goreportcard.com/report/github.com/fromanirh/kubevirt-metrics-collector)
+
 ## License
 
 Apache v2
