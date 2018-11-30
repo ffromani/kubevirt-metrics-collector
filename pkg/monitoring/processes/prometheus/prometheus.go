@@ -101,6 +101,7 @@ func autoFillMetrics() error {
 	return nil
 }
 
+// DumpMetrics dump the current metrics in the text format in the given writer.
 func DumpMetrics(w io.Writer) error {
 	err := autoFillMetrics()
 	if err != nil {
@@ -120,11 +121,13 @@ func DumpMetrics(w io.Writer) error {
 	return nil
 }
 
+// MetricsUpdater takes care of updating the existing metrics
 type MetricsUpdater struct {
 	// hopefully doesn't change during the lifetime of the updater!
 	Host string
 }
 
+// UpdateCPU updates the CPU-related metrics
 func (mu *MetricsUpdater) UpdateCPU(domain string, proc *process.Process) error {
 	process, err := extractProcName(proc)
 	if err != nil {
@@ -142,6 +145,7 @@ func (mu *MetricsUpdater) UpdateCPU(domain string, proc *process.Process) error 
 	return nil
 }
 
+// UpdateMemory updates the Memory-related metrics
 func (mu *MetricsUpdater) UpdateMemory(domain string, proc *process.Process) error {
 	process, err := extractProcName(proc)
 	if err != nil {

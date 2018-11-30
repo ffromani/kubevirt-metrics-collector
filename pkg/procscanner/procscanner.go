@@ -29,15 +29,23 @@ import (
 	"strings"
 )
 
+// ProcTarget defines a target for a ProcScanner
 type ProcTarget struct {
-	Name string
-	Argv []string
+	Name string   // user-visible name of the target. If not specified, Argv[0] is used
+	Argv []string // command line arguments to match to identify the target
 }
 
+// ProcScanner scans the Linux procfs to find the PID of the given targets
 type ProcScanner struct {
 	Targets []ProcTarget
 }
 
+// Scan performs the scan of the procfs and returns a mapping between ProcTargets - by name, and the PIDs
+// basePath is the path where procfs is mounted (default: /proc)
+// returns a map whose keys are ProcTargets Names, and whose valuesa is an unordered list of all the PIDs
+// of the live instances of the ProcTargets.
+// For example, you should expect only one entry for '/sbin/init' (or equivalent), but you should expect
+// more than one entry for '/bin/sh' or '/bin/getty' (or equivalent)
 func (p *ProcScanner) Scan(basePath string) (map[string][]int32, error) {
 	res := make(map[string][]int32)
 
@@ -101,6 +109,8 @@ func readProcCmdline(pathname string) []string {
 	return argv
 }
 
+// MatchArgv matches two commanddlines.
+// Return error iff the normalization of the commandline fails.
 func MatchArgv(argv, model []string) (bool, error) {
 	ref := model
 	oth := argv
