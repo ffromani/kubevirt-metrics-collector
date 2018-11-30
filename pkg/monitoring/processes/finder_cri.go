@@ -27,7 +27,6 @@ import (
 	"github.com/fromanirh/kubevirt-metrics-collector/pkg/procscanner"
 
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -158,15 +157,15 @@ func (cpf *CRIPodFinder) updateInfoPods() error {
 func (cpf *CRIPodFinder) FindPodByPID(pid int32) (string, error) {
 	containerId, cgroupStyle := FindContainerIDByCGroup(pid)
 	if cgroupStyle != DockerCGroup {
-		return "", errors.New(fmt.Sprintf("unsupported cgroup style: %v", cgroupStyle))
+		return "", fmt.Errorf("unsupported cgroup style: %v", cgroupStyle)
 	}
 	podId, ok := cpf.containerToPod[containerId]
 	if !ok {
-		return "", errors.New(fmt.Sprintf("no POD found for pid %v on container %v", pid, containerId))
+		return "", fmt.Errorf("no POD found for pid %v on container %v", pid, containerId)
 	}
 	podName, ok := cpf.podInfos[podId]
 	if !ok {
-		return "", errors.New(fmt.Sprintf("no info for pid %v on container %v on pod %v", pid, containerId, podId))
+		return "", fmt.Errorf("no info for pid %v on container %v on pod %v", pid, containerId, podId)
 	}
 	return podName, nil
 }

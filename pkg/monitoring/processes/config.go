@@ -53,7 +53,7 @@ func NewConfigFromFile(confFile string) (*Config, error) {
 
 	err := readFile(conf, confFile)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("error reading the configuration on '%s': %s", confFile, err))
+		return nil, fmt.Errorf("error reading the configuration on '%s': %s", confFile, err)
 	}
 
 	return conf, nil
@@ -80,7 +80,7 @@ func (c *Config) Validate() error {
 		if c.Hostname == "" {
 			c.Hostname, err = os.Hostname()
 			if err != nil {
-				return errors.New(fmt.Sprintf("error getting the host name: %s", err))
+				return fmt.Errorf("error getting the host name: %s", err)
 			}
 		}
 	}

@@ -33,7 +33,7 @@ func TestConfigInvalidByDefault(t *testing.T) {
 func TestConfigFillValidate(t *testing.T) {
 	conf := NewConfig()
 	conf.Targets = []procscanner.ProcTarget{
-		procscanner.ProcTarget{
+		{
 			Name: "init",
 			Argv: []string{"/sbin/init"},
 		},
@@ -50,7 +50,7 @@ func TestConfigFillValidate(t *testing.T) {
 func TestConfigValidateFillInterval(t *testing.T) {
 	conf := &Config{}
 	conf.Targets = []procscanner.ProcTarget{
-		procscanner.ProcTarget{
+		{
 			Name: "init",
 			Argv: []string{"/sbin/init"},
 		},
@@ -69,7 +69,7 @@ func TestConfigValidateFillInterval(t *testing.T) {
 func TestConfigMinimalFillValidate(t *testing.T) {
 	conf := NewConfig()
 	conf.Targets = []procscanner.ProcTarget{
-		procscanner.ProcTarget{
+		{
 			Name: "init",
 			Argv: []string{"/sbin/init"},
 		},
@@ -91,7 +91,7 @@ func TestConfigInvalidWithoutTargets(t *testing.T) {
 func TestConfigInvalidWithoutListenAddress(t *testing.T) {
 	conf := NewConfig()
 	conf.Targets = []procscanner.ProcTarget{
-		procscanner.ProcTarget{
+		{
 			Name: "init",
 			Argv: []string{"/sbin/init"},
 		},
@@ -104,7 +104,7 @@ func TestConfigInvalidWithoutListenAddress(t *testing.T) {
 func TestConfigInvalidWithoutCRIEndPoint(t *testing.T) {
 	conf := NewConfig()
 	conf.Targets = []procscanner.ProcTarget{
-		procscanner.ProcTarget{
+		{
 			Name: "init",
 			Argv: []string{"/sbin/init"},
 		},

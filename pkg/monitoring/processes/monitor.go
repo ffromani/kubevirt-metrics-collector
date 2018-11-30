@@ -53,10 +53,7 @@ func (dm *DomainMonitor) Update() error {
 	if err = dm.refreshPods(); err != nil {
 		return err
 	}
-	if err = dm.updateMetrics(); err != nil {
-		return err
-	}
-	return nil
+	return dm.updateMetrics()
 }
 
 func (dm *DomainMonitor) updateMetrics() error {
@@ -90,7 +87,7 @@ func (dm *DomainMonitor) refreshPods() error {
 	}
 
 	podsToRemove := []string{}
-	for name, _ := range dm.pods {
+	for name := range dm.pods {
 		_, ok := pods[name]
 		if !ok {
 			// pod is gone
