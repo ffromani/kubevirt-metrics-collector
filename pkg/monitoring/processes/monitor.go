@@ -20,70 +20,56 @@
 package processes
 
 import (
-	"github.com/shirou/gopsutil/process"
 	"log"
+	"sync"
+	"time"
 )
 
-type MetricsUpdater interface {
-	UpdateCPU(domain string, proc *process.Process) error
-	UpdateMemory(domain string, proc *process.Process) error
-}
+type PodInfoMap map[string]*PodInfo
 
 type Monitor interface {
-	Update() error
+	Update() (PodInfoMap, error)
 }
+
+const FreshnessThreshold = 1 * time.Second
 
 type DomainMonitor struct {
 	podFinder PodFinder
-	pods      map[string]*PodInfo
-	metrics   MetricsUpdater
+	lock      sync.RWMutex
+	pods      PodInfoMap
+	timestamp time.Time
 }
 
-func NewDomainMonitor(podFinder PodFinder, metricsUpdater MetricsUpdater) (Monitor, error) {
-	dm := DomainMonitor{
+func NewDomainMonitor(podFinder PodFinder) (Monitor, error) {
+	return &DomainMonitor{
 		podFinder: podFinder,
-		pods:      make(map[string]*PodInfo),
-		metrics:   metricsUpdater,
-	}
-	return &dm, nil
+		pods:      make(PodInfoMap),
+	}, nil
 }
 
-func (dm *DomainMonitor) Update() error {
-	var err error
-	if err = dm.refreshPods(); err != nil {
-		return err
+func (dm *DomainMonitor) Update() (PodInfoMap, error) {
+	// this is racy, and we don't care
+	age := time.Now().Sub(dm.timestamp)
+	if age <= FreshnessThreshold {
+		return dm.currentPodInfo()
 	}
-	return dm.updateMetrics()
+	return dm.updatePodInfo()
+
 }
 
-func (dm *DomainMonitor) updateMetrics() error {
-	var err error
-	updated := 0
-	for podName, podInfo := range dm.pods {
-		for _, proc := range podInfo.Procs {
-			err = dm.metrics.UpdateCPU(podName, proc)
-			if err != nil {
-				log.Printf("failed to update CPU for pod %v: %v", podName, err)
-				continue
-			}
-
-			err = dm.metrics.UpdateMemory(podName, proc)
-			if err != nil {
-				log.Printf("failed to update Memory for pod %v: %v", podName, err)
-				continue
-			}
-			updated++
-		}
-	}
-	log.Printf("updated metrics for %v pods", updated)
-	return nil
+func (dm *DomainMonitor) currentPodInfo() (PodInfoMap, error) {
+	dm.lock.RLock()
+	defer dm.lock.RUnlock()
+	return dm.pods, nil
 }
 
-func (dm *DomainMonitor) refreshPods() error {
+func (dm *DomainMonitor) updatePodInfo() (PodInfoMap, error) {
+	dm.lock.Lock()
+	defer dm.lock.Unlock()
 	pods, err := dm.podFinder.FindPods()
 	if err != nil {
 		log.Printf("error finding available pods: %v", err)
-		return err
+		return make(PodInfoMap), err
 	}
 
 	podsToRemove := []string{}
@@ -106,5 +92,5 @@ func (dm *DomainMonitor) refreshPods() error {
 	}
 
 	log.Printf("refreshed %v pods", len(dm.pods))
-	return nil
+	return dm.pods, nil
 }

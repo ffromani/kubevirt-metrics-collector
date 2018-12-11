@@ -29,25 +29,18 @@ import (
 	"os"
 )
 
-const (
-	DefaultInterval = "5s" // Polling interval
-)
-
 // Config encodes the configuration of the monitoring package
 type Config struct {
 	Targets       []procscanner.ProcTarget `json:"targets"`
 	ListenAddress string                   `json:"listenaddress"`
 	CRIEndPoint   string                   `json:"criendpoint"`
-	Interval      string                   `json:"interval"`
 	Hostname      string                   `json:"hostname"`
 	DebugMode     bool                     `json:"debugmode"`
 }
 
 // NewConfig creates a new Config object with the current defaults
 func NewConfig() *Config {
-	return &Config{
-		Interval: DefaultInterval,
-	}
+	return &Config{}
 }
 
 // NewConfigFromFile creates a new Config object with the settings taken from the given file.
@@ -74,10 +67,6 @@ func (c *Config) Validate() error {
 	}
 	if c.CRIEndPoint == "" {
 		return errors.New("missing CRI endpoint")
-	}
-	// optional
-	if c.Interval == "" {
-		c.Interval = DefaultInterval
 	}
 	if c.Hostname == "" {
 		var err error

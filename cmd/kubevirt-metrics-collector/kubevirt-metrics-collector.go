@@ -20,18 +20,17 @@ package main
 
 import (
 	"github.com/davecgh/go-spew/spew"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	flag "github.com/spf13/pflag"
 
 	"github.com/fromanirh/kubevirt-metrics-collector/pkg/monitoring/processes"
-	promlocal "github.com/fromanirh/kubevirt-metrics-collector/pkg/monitoring/processes/prometheus"
 	"github.com/fromanirh/kubevirt-metrics-collector/pkg/procscanner"
 
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"time"
 )
 
 func main() {
@@ -39,7 +38,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "usage: %s /path/to/kubevirt-metrics-collector.json\n", os.Args[0])
 		flag.PrintDefaults()
 	}
-	intervalString := flag.StringP("interval", "I", processes.DefaultInterval, "metrics collection interval")
 	debugMode := flag.BoolP("debug", "D", false, "enable pod resolution debug mode")
 	dumpMode := flag.BoolP("dump-metrics", "M", false, "dump the available metrics and exit")
 	checkMode := flag.BoolP("check-config", "C", false, "validate (and dump) configuration and exit")
@@ -50,10 +48,7 @@ func main() {
 	var err error
 
 	if *dumpMode {
-		err = promlocal.DumpMetrics(os.Stderr)
-		if err != nil {
-			log.Fatalf("error dumping: %v", err)
-		}
+		// TODO
 		return
 	}
 
@@ -67,34 +62,30 @@ func main() {
 		log.Fatalf("error reading the configuration file %s: %v", args[0], err)
 	}
 
-	conf.Interval = *intervalString
 	conf.DebugMode = *debugMode
 	conf.Validate()
-
-	interval, err := time.ParseDuration(conf.Interval)
-	if err != nil {
-		log.Fatalf("error getting the polling interval: %s", err)
-	}
 
 	scanner := procscanner.ProcScanner{
 		Targets: conf.Targets,
 	}
 
-	if *debugMode {
+	if *debugMode || *checkMode {
 		spew.Fdump(os.Stderr, scanner)
 	}
 
-	// here because this way the debug mode can emit both conf and scanner content
 	if *checkMode {
-		spew.Fdump(os.Stderr, conf)
 		return
 	}
 
 	log.Printf("kubevirt-metrics-collector started")
 	defer log.Printf("kubevirt-metrics-collector stopped")
 
-	go processes.Collect(conf, scanner, interval)
+	co, err := processes.NewCollector(conf, scanner)
+	if err != nil {
+		log.Fatalf("error creating the collector: %v", err)
+	}
 
+	prometheus.MustRegister(co)
 	http.Handle("/metrics", promhttp.Handler())
 	log.Fatal(http.ListenAndServe(conf.ListenAddress, nil))
 }

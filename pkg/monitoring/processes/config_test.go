@@ -40,30 +40,10 @@ func TestConfigFillValidate(t *testing.T) {
 	}
 	conf.ListenAddress = ":9999"
 	conf.CRIEndPoint = "/var/run/cri.sock"
-	conf.Interval = "10s"
 	conf.Hostname = "foobar.test.lan"
 	conf.DebugMode = false
 
 	checkValid(t, conf)
-}
-
-func TestConfigValidateFillInterval(t *testing.T) {
-	conf := &Config{}
-	conf.Targets = []procscanner.ProcTarget{
-		{
-			Name: "init",
-			Argv: []string{"/sbin/init"},
-		},
-	}
-	conf.ListenAddress = ":9999"
-	conf.CRIEndPoint = "/var/run/cri.sock"
-	conf.Hostname = "foobar.test.lan"
-	conf.DebugMode = false
-
-	checkValid(t, conf)
-	if conf.Interval == "" {
-		t.Errorf("interval unexpectedly missing")
-	}
 }
 
 func TestConfigMinimalFillValidate(t *testing.T) {

@@ -26,45 +26,6 @@ import (
 	"github.com/shirou/gopsutil/process"
 )
 
-type procInfo struct {
-	domain string
-	exe    string
-}
-
-type NullUpdater struct {
-	CPU    []procInfo
-	Memory []procInfo
-}
-
-func (nu *NullUpdater) Reset() {
-	nu.CPU = []procInfo{}
-	nu.Memory = []procInfo{}
-}
-
-func (nu *NullUpdater) UpdateCPU(domain string, proc *process.Process) error {
-	exe, err := proc.Exe()
-	if err != nil {
-		return err
-	}
-	nu.CPU = append(nu.CPU, procInfo{
-		domain: domain,
-		exe:    exe,
-	})
-	return nil
-}
-
-func (nu *NullUpdater) UpdateMemory(domain string, proc *process.Process) error {
-	exe, err := proc.Exe()
-	if err != nil {
-		return err
-	}
-	nu.Memory = append(nu.Memory, procInfo{
-		domain: domain,
-		exe:    exe,
-	})
-	return nil
-}
-
 type SelfScanner struct {
 	Skip bool
 }
@@ -89,60 +50,46 @@ func (sc *SelfScanner) FindPodByPID(pid int32) (string, error) {
 }
 
 func TestUpdateHappyPath(t *testing.T) {
-	nu := &NullUpdater{}
-	mon, err := NewDomainMonitor(&SelfScanner{}, nu)
+	mon, err := NewDomainMonitor(&SelfScanner{})
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 		return
 	}
 
-	err = mon.Update()
+	pods, err := mon.Update()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 		return
 	}
-	if len(nu.CPU) != 1 {
-		t.Errorf("unexpected CPU updates: %#v", nu.CPU)
-	}
-	if len(nu.Memory) != 1 {
-		t.Errorf("unexpected Memory updates: %#v", nu.Memory)
+	if len(pods) != 1 {
+		t.Errorf("unexpected pods: %#v", pods)
 	}
 }
 
 func TestUpdatePodDisappears(t *testing.T) {
-	nu := &NullUpdater{}
 	sc := &SelfScanner{}
-	mon, err := NewDomainMonitor(sc, nu)
+	mon, err := NewDomainMonitor(sc)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 		return
 	}
 
-	err = mon.Update()
+	pods, err := mon.Update()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 		return
 	}
-	if len(nu.CPU) != 1 {
-		t.Errorf("unexpected CPU updates: %#v", nu.CPU)
-	}
-	if len(nu.Memory) != 1 {
-		t.Errorf("unexpected Memory updates: %#v", nu.Memory)
+	if len(pods) != 1 {
+		t.Errorf("unexpected pods: %#v", pods)
 	}
 
-	nu.Reset()
 	sc.Skip = true
-
-	err = mon.Update()
+	pods, err = mon.Update()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 		return
 	}
-	if len(nu.CPU) != 0 {
-		t.Errorf("unexpected CPU updates: %#v", nu.CPU)
+	if len(pods) != 0 {
+		t.Errorf("unexpected pods: %#v", pods)
 	}
-	if len(nu.Memory) != 0 {
-		t.Errorf("unexpected Memory updates: %#v", nu.Memory)
-	}
-
 }
