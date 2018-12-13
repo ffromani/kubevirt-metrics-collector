@@ -21,8 +21,11 @@ package processes
 
 import (
 	"log"
+	"os"
 	"sync"
 	"time"
+
+	"github.com/shirou/gopsutil/process"
 )
 
 type PodInfoMap map[string]*PodInfo
@@ -38,6 +41,28 @@ type DomainMonitor struct {
 	lock      sync.RWMutex
 	pods      PodInfoMap
 	timestamp time.Time
+}
+
+type SelfMonitor struct {
+	pods PodInfoMap
+}
+
+func NewSelfMonitor() (Monitor, error) {
+	mon := &SelfMonitor{
+		pods: make(PodInfoMap),
+	}
+	self, err := process.NewProcess(int32(os.Getpid()))
+	if err != nil {
+		return mon, err
+	}
+	info := &PodInfo{}
+	info.Procs = append(info.Procs, self)
+	mon.pods["self"] = info
+	return mon, nil
+}
+
+func (sm *SelfMonitor) Update() (PodInfoMap, error) {
+	return sm.pods, nil
 }
 
 func NewDomainMonitor(podFinder PodFinder) (Monitor, error) {

@@ -74,7 +74,24 @@ type Collector struct {
 	mon  Monitor
 }
 
-func NewCollector(conf *Config, scanner procscanner.ProcScanner) (*Collector, error) {
+func NewSelfCollector() (*Collector, error) {
+	mon, err := NewSelfMonitor()
+	if err != nil {
+		// how so?!
+		return nil, err
+	}
+
+	return &Collector{
+		conf: NewConfig(),
+		mon:  mon,
+	}, nil
+}
+
+func NewCollectorFromConf(conf *Config) (*Collector, error) {
+	scanner := procscanner.ProcScanner{
+		Targets: conf.Targets,
+	}
+
 	finder, err := NewCRIPodFinder(conf.CRIEndPoint, DefaultTimeout, scanner)
 	if err != nil {
 		return nil, err

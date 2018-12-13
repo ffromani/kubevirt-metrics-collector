@@ -25,7 +25,6 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"github.com/fromanirh/kubevirt-metrics-collector/pkg/monitoring/processes"
-	"github.com/fromanirh/kubevirt-metrics-collector/pkg/procscanner"
 
 	"fmt"
 	"log"
@@ -48,7 +47,13 @@ func main() {
 	var err error
 
 	if *dumpMode {
-		// TODO
+		co, err := processes.NewSelfCollector()
+		if err != nil {
+			log.Fatalf("error creating the collector: %v", err)
+		}
+		prometheus.MustRegister(co)
+
+		processes.DumpMetrics(os.Stderr)
 		return
 	}
 
@@ -65,12 +70,8 @@ func main() {
 	conf.DebugMode = *debugMode
 	conf.Validate()
 
-	scanner := procscanner.ProcScanner{
-		Targets: conf.Targets,
-	}
-
 	if *debugMode || *checkMode {
-		spew.Fdump(os.Stderr, scanner)
+		spew.Fdump(os.Stderr, conf)
 	}
 
 	if *checkMode {
@@ -80,7 +81,7 @@ func main() {
 	log.Printf("kubevirt-metrics-collector started")
 	defer log.Printf("kubevirt-metrics-collector stopped")
 
-	co, err := processes.NewCollector(conf, scanner)
+	co, err := processes.NewCollectorFromConf(conf)
 	if err != nil {
 		log.Fatalf("error creating the collector: %v", err)
 	}
