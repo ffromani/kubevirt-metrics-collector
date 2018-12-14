@@ -25,7 +25,6 @@ _testmain.go
 
 cmd/kubevirt-metrics-collector/kubevirt-metrics-collector
 Gopkg.lock
-vendor/
 tags
 
 internal/pkg/version/version.go
