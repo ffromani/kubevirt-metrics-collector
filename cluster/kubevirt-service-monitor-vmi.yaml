@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: kubevirt-vmi
-  namespace: kube-system
+  namespace: kubevirt
   labels:
     openshift.io/cluster-monitoring: ""
     prometheus.kubevirt.io: ""

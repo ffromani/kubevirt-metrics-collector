@@ -2,7 +2,7 @@ apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
   name: kubevirt-metrics-collector
-  namespace: kube-system
+  namespace: kubevirt
   labels:
     app: kubevirt-metrics-collector
 spec:
