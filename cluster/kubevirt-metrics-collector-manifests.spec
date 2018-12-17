@@ -2,12 +2,12 @@
 %global debug_package %{nil}
 %global source_name v%{version}
 
-%global commit af1593f1702e3f60bf9e98a8b2284e3ff795799b
+%global commit d8a6a6a50067b7468e8e9cfbd5e42b551ae5539f
 %global build_hash %(c=%{commit}; echo ${c:0:7})
 %global spec_release 1
 
 Name:		kubevirt-metrics-collector-manifests
-Version:        0.12.0
+Version:        0.12.0.2
 Release:	%{spec_release}.%{build_hash}
 Summary:	manifests to deploy kubevirt-metrics-collector
 		
@@ -41,6 +41,9 @@ cp -v %{SOURCE4} %{buildroot}%{_datadir}/%{name}/manifests/kubevirt-service-vmi.
 
 
 %changelog
+* Thu Dec 17 2018 Francesco Romani <fromani@redhat.com> - 0.12.0.2-d8a6a6a5
+- 0.12.0 Release requiring kubevirt >= 0.12.0.
+
 * Thu Dec 17 2018 Francesco Romani <fromani@redhat.com> - 0.12.0.1-af1593f1
 - 0.12.0 Release
 
