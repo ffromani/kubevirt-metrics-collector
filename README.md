@@ -14,27 +14,62 @@ Apache v2
 * [kubernetes APIs](https://github.com/kubernetes/kubernetes)
 
 
-## Installation: kubernetes/kubevirt cluster
+## Installation
 
 This project can be deployed in a kubevirt cluster to report metrics about processes running inside PODs.
 You may use this to monitor the resource consumption of these infrastructure processes for VM-based workloads.
 We assume that the cluster is running [prometheus-operator](https://github.com/coreos/prometheus-operator/blob/master/Documentation/user-guides/getting-started.md) to manage the monitoring using prometheus,
-and [kubevirt](https://github.com/kubevirt/kubevirt/releases/tag/v0.9.1) >= 0.9.1, which includes itself better integration with prometheus operator.
+and [kubevirt](https://github.com/kubevirt/kubevirt/releases/tag/v0.12.0) >= 0.12.0, which includes itself better integration with prometheus operator.
 
-### Deploy a new service to plug in the configuration KubeVirt uses to interact with prometheus-operator:
-Just use the provided manifest:
-```
-kubectl create -f cluster/kube-service-vmi.yaml
-```
+### Common steps
 
-### Deploy the server itself into the cluster:
-Set PLATFORM to either "k8s" or "ocp" and
-```
-kubectl create -f cluster/kubevirt-metrics-collector-config-map.yaml
-kubectl create -f cluster/kubevirt-metrics-collector-$PLATFORM.yaml
+You need to follow these initial steps regardless on the platform (vanilla kubernetes, OKD...) you are deploying into
+
+Create the service using the provided manifest:
+```bash
+kubectl create -f cluster/manifests/vmi-service.yaml
 ```
 
-TODO: add template
+Create the config map:
+```bash
+kubectl create -f cluster/manifests/config-map.yaml
+```
+
+The following steps depends on the platform you are working on.
+
+#### Deploy on KubeVirt running on [Kubernetes](https://kubernetes.io/)
+
+We expect kubernetes >= 1.12
+
+You can just deploy the collector
+```
+kubectl create -f cluster/manifests/k8s-daemonset.yaml
+```
+
+#### Deploy on KubeVirt running on [OKD](https://www.okd.io/)
+
+We expect okd >= 3.11.
+
+You need to set up a new accounts and a new securityContextConstraings, both achieved doing:
+```bash
+kubectl create -f cluster/manifests/okd-account-scc.yaml
+```
+
+Now add the permissions to the `securityContextConstraints` created on the step right above.
+First add permissions for the 'hostPath' volume:
+```bash
+oc patch scc scc-hostpath -p '{"allowHostDirVolumePlugin": true}'
+```
+
+Then make sure the `hostPID` setting is allowed:
+```bash
+oc patch scc scc-hostpath -p '{"allowHostPID": true}'
+```
+
+Now you can deploy the collector
+```
+kubectl create -f cluster/manifests/okd-daemonset.yaml
+```
 
 ### Fix namespace mismatch (optional)
 `kubevirt-metrics-collector` uses a deployment in the `kube-system` namespace. VM pods usually run in the `default` namespace.
@@ -78,7 +113,7 @@ metadata:
 This is the last step. You need this  to let `prometheus-operator` pickup and add rules for this endpoint.
 Just use the provided manifest:
 ```
-kubectl create -f cluster/kube-service-monitor-vmi.yaml
+kubectl create -f cluster/manifests/vmi-service-monitor.yaml
 ```
 
 ## Exposed metrics
