@@ -1,18 +1,17 @@
-# Monitoring
 apiVersion: v1
 kind: Service
 metadata:
   name: kubevirt-prometheus-metrics-vmi
-  namespace: kubevirt
   labels:
     prometheus.kubevirt.io: ""
     kubevirt.io: ""
 spec:
   ports:
     - name: metrics-vmi
-      port: 9091
+      port: 19091
       targetPort: metrics-vmi
       protocol: TCP
+      scheme: http
   selector:
     vmi.prometheus.kubevirt.io: ""
 

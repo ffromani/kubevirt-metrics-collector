@@ -21,38 +21,29 @@ You may use this to monitor the resource consumption of these infrastructure pro
 We assume that the cluster is running [prometheus-operator](https://github.com/coreos/prometheus-operator/blob/master/Documentation/user-guides/getting-started.md) to manage the monitoring using prometheus,
 and [kubevirt](https://github.com/kubevirt/kubevirt/releases/tag/v0.12.0) >= 0.12.0, which includes itself better integration with prometheus operator.
 
-### Common steps
-
-You need to follow these initial steps regardless on the platform (vanilla kubernetes, OKD...) you are deploying into
-
-Create the service using the provided manifest:
-```bash
-kubectl create -f cluster/manifests/vmi-service.yaml
-```
-
-Create the config map:
-```bash
-kubectl create -f cluster/manifests/config-map.yaml
-```
-
-The following steps depends on the platform you are working on.
-
-#### Deploy on KubeVirt running on [Kubernetes](https://kubernetes.io/)
+### Deploy on KubeVirt running on [Kubernetes](https://kubernetes.io/)
 
 We expect kubernetes >= 1.12
 
-You can just deploy the collector
-```
-kubectl create -f cluster/manifests/k8s-daemonset.yaml
-```
+TODO
 
 #### Deploy on KubeVirt running on [OKD](https://www.okd.io/)
 
 We expect okd >= 3.11.
 
-You need to set up a new accounts and a new securityContextConstraings, both achieved doing:
+Create the service using the provided manifest:
 ```bash
-kubectl create -f cluster/manifests/okd-account-scc.yaml
+oc create -n openshift-monitoring -f vmi-service.yaml
+```
+
+Create the config map:
+```bash
+oc create -n openshift-monitoring -f config-map.yaml
+```
+
+You need to set up a new accounts and a new securityContextConstraints, both achieved doing:
+```bash
+oc create -n openshift-monitoring -f okd-account-scc.yaml
 ```
 
 Now add the permissions to the `securityContextConstraints` created on the step right above.
@@ -68,8 +59,10 @@ oc patch scc scc-hostpath -p '{"allowHostPID": true}'
 
 Now you can deploy the collector
 ```
-kubectl create -f cluster/manifests/okd-daemonset.yaml
+oc create -n openshift-monitoring -f okd-daemonset.yaml
 ```
+
+oc create -n openshift-monitoring -n vmi-service-monitor.yaml
 
 ### Fix namespace mismatch (optional)
 `kubevirt-metrics-collector` uses a deployment in the `kube-system` namespace. VM pods usually run in the `default` namespace.
@@ -107,13 +100,6 @@ metadata:
   labels:
     prometheus.kubevirt.io: ""
 ...
-```
-
-### Deploy a `Service Monitor`
-This is the last step. You need this  to let `prometheus-operator` pickup and add rules for this endpoint.
-Just use the provided manifest:
-```
-kubectl create -f cluster/manifests/vmi-service-monitor.yaml
 ```
 
 ## Exposed metrics

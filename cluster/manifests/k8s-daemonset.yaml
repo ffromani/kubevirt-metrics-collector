@@ -2,7 +2,6 @@ apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
   name: kubevirt-metrics-collector
-  namespace: kubevirt
   labels:
     app: kubevirt-metrics-collector
 spec:
@@ -13,7 +12,7 @@ spec:
         vmi.prometheus.kubevirt.io: ""
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "9091"
+        prometheus.io/port: "19091"
     spec:
       serviceAccountName: kubevirt-privileged
       hostPID: true
@@ -22,7 +21,7 @@ spec:
       containers:
       - name: collector
         ports:
-        - containerPort: 9091
+        - containerPort: 19091
           protocol: "TCP"
           name: "metrics-vmi"
         image: fromanirh/kubevirt-metrics-collector:v0.12.0.1
