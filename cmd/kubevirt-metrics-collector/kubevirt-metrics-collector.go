@@ -32,7 +32,7 @@ import (
 	"os"
 )
 
-func main() {
+func Main() int {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s /path/to/kubevirt-metrics-collector.json\n", os.Args[0])
 		flag.PrintDefaults()
@@ -49,22 +49,24 @@ func main() {
 	if *dumpMode {
 		co, err := processes.NewSelfCollector()
 		if err != nil {
-			log.Fatalf("error creating the collector: %v", err)
+			log.Printf("error creating the collector: %v", err)
+			return 1
 		}
 		prometheus.MustRegister(co)
 
 		processes.DumpMetrics(os.Stderr)
-		return
+		return 1
 	}
 
 	if len(args) < 1 {
 		flag.Usage()
-		return
+		return 1
 	}
 
 	conf, err := processes.NewConfigFromFile(args[0])
 	if err != nil {
-		log.Fatalf("error reading the configuration file %s: %v", args[0], err)
+		log.Printf("error reading the configuration file %s: %v", args[0], err)
+		return 1
 	}
 
 	conf.DebugMode = *debugMode
@@ -75,7 +77,7 @@ func main() {
 	}
 
 	if *checkMode {
-		return
+		return 0
 	}
 
 	log.Printf("kubevirt-metrics-collector started")
@@ -83,10 +85,16 @@ func main() {
 
 	co, err := processes.NewCollectorFromConf(conf)
 	if err != nil {
-		log.Fatalf("error creating the collector: %v", err)
+		log.Printf("error creating the collector: %v", err)
+		return 2
 	}
 
 	prometheus.MustRegister(co)
 	http.Handle("/metrics", promhttp.Handler())
-	log.Fatal(http.ListenAndServe(conf.ListenAddress, nil))
+	log.Printf("%s", http.ListenAndServe(conf.ListenAddress, nil))
+	return 0
+}
+
+func main() {
+	os.Exit(Main())
 }
