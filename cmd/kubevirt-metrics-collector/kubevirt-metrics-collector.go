@@ -24,6 +24,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	flag "github.com/spf13/pflag"
 
+	"github.com/fromanirh/kubevirt-metrics-collector/internal/pkg/k8sutils"
 	"github.com/fromanirh/kubevirt-metrics-collector/pkg/monitoring/processes"
 
 	"fmt"
@@ -33,12 +34,13 @@ import (
 )
 
 func Main() int {
+	tlsInfo := &k8sutils.TLSInfo{}
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s /path/to/kubevirt-metrics-collector.json\n", os.Args[0])
 		flag.PrintDefaults()
 	}
-	certFilePath := flag.StringP("cert-file", "c", "", "path to TLS certificate - you need also the key to enable TLS")
-	keyFilePath := flag.StringP("key-file", "k", "", "path to TLS key - you need also the cert to enable TLS")
+	flag.StringVarP(&tlsInfo.CertFilePath, "cert-file", "c", "", "override path to TLS certificate - you need also the key to enable TLS")
+	flag.StringVarP(&tlsInfo.KeyFilePath, "key-file", "k", "", "override path to TLS key - you need also the cert to enable TLS")
 	fakeMode := flag.BoolP("fake", "F", false, "run even connection to CRI runtime fails")
 	debugMode := flag.BoolP("debug", "D", false, "enable pod resolution debug mode")
 	dumpMode := flag.BoolP("dump-metrics", "M", false, "dump the available metrics and exit")
@@ -96,13 +98,15 @@ func Main() int {
 		}
 	}
 
+	tlsInfo.UpdateFromK8S()
+
 	http.Handle("/metrics", promhttp.Handler())
-	if *certFilePath == "" || *keyFilePath == "" {
-		log.Printf("TLS NOT fully configured (cert AND key), serving over HTTP")
-		log.Printf("%s", http.ListenAndServe(conf.ListenAddress, nil))
+	if tlsInfo.IsEnabled() {
+		log.Printf("TLS configured, serving over HTTPS")
+		log.Printf("%s", http.ListenAndServeTLS(conf.ListenAddress, tlsInfo.CertFilePath, tlsInfo.KeyFilePath, nil))
 	} else {
-		log.Printf("TLS configured: cert='%s' key='%s', serving over HTTPS", *certFilePath, *keyFilePath)
-		log.Printf("%s", http.ListenAndServeTLS(conf.ListenAddress, *certFilePath, *keyFilePath, nil))
+		log.Printf("TLS *NOT* configured, serving over HTTP")
+		log.Printf("%s", http.ListenAndServe(conf.ListenAddress, nil))
 	}
 	return 0
 }
