@@ -37,6 +37,9 @@ func Main() int {
 		fmt.Fprintf(os.Stderr, "usage: %s /path/to/kubevirt-metrics-collector.json\n", os.Args[0])
 		flag.PrintDefaults()
 	}
+	certFilePath := flag.StringP("cert-file", "c", "", "path to TLS certificate - you need also the key to enable TLS")
+	keyFilePath := flag.StringP("key-file", "k", "", "path to TLS key - you need also the cert to enable TLS")
+	fakeMode := flag.BoolP("fake", "F", false, "run even connection to CRI runtime fails")
 	debugMode := flag.BoolP("debug", "D", false, "enable pod resolution debug mode")
 	dumpMode := flag.BoolP("dump-metrics", "M", false, "dump the available metrics and exit")
 	checkMode := flag.BoolP("check-config", "C", false, "validate (and dump) configuration and exit")
@@ -84,14 +87,23 @@ func Main() int {
 	defer log.Printf("kubevirt-metrics-collector stopped")
 
 	co, err := processes.NewCollectorFromConf(conf)
-	if err != nil {
+	if err == nil {
+		prometheus.MustRegister(co)
+	} else {
 		log.Printf("error creating the collector: %v", err)
-		return 2
+		if !*fakeMode {
+			return 2
+		}
 	}
 
-	prometheus.MustRegister(co)
 	http.Handle("/metrics", promhttp.Handler())
-	log.Printf("%s", http.ListenAndServe(conf.ListenAddress, nil))
+	if *certFilePath == "" || *keyFilePath == "" {
+		log.Printf("TLS NOT fully configured (cert AND key), serving over HTTP")
+		log.Printf("%s", http.ListenAndServe(conf.ListenAddress, nil))
+	} else {
+		log.Printf("TLS configured: cert='%s' key='%s', serving over HTTPS", *certFilePath, *keyFilePath)
+		log.Printf("%s", http.ListenAndServeTLS(conf.ListenAddress, *certFilePath, *keyFilePath, nil))
+	}
 	return 0
 }
 
