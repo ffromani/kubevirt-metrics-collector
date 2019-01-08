@@ -62,7 +62,41 @@ Now you can deploy the collector
 oc create -n openshift-monitoring -f okd-daemonset.yaml
 ```
 
-oc create -n openshift-monitoring -n vmi-service-monitor.yaml
+#### HACK: Deploy on KubeVirt running on [OKD](https://www.okd.io/) faking node-exporter
+
+We expect okd >= 3.11.
+the `kubevirt-metrics-collector` can plug in the existing `node-exporter` service and can
+be used transparently with the vanilla infrastructure, with no extra configuration.
+If you are unsure if this applies to your case, please ignore this and just use the previous,
+supported installatin method.
+
+Create the config map:
+```bash
+oc create -n openshift-monitoring -f config-map.yaml
+```
+
+You need to set up a new accounts and a new securityContextConstraints, both achieved doing:
+```bash
+oc create -n openshift-monitoring -f okd-account-scc.yaml
+```
+
+Now add the permissions to the `securityContextConstraints` created on the step right above.
+First add permissions for the 'hostPath' volume:
+```bash
+oc patch scc scc-hostpath -p '{"allowHostDirVolumePlugin": true}'
+```
+
+Then make sure the `hostPID` setting is allowed:
+```bash
+oc patch scc scc-hostpath -p '{"allowHostPID": true}'
+```
+
+Now you can deploy the collector
+```
+oc create -n openshift-monitoring -f okd-daemonset.yaml
+```
+
+This is it. You should soon see the metrics in your prometheus servers.
 
 ### Fix namespace mismatch (optional)
 `kubevirt-metrics-collector` uses a deployment in the `kube-system` namespace. VM pods usually run in the `default` namespace.
