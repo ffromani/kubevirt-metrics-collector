@@ -99,6 +99,7 @@ func Main() int {
 	}
 
 	tlsInfo.UpdateFromK8S()
+	defer tlsInfo.Clean()
 
 	http.Handle("/metrics", promhttp.Handler())
 	if tlsInfo.IsEnabled() {
