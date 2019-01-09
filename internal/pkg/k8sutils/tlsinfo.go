@@ -33,6 +33,12 @@ func (ti *TLSInfo) UpdateFromK8S() error {
 		log.Printf("running outside a K8S cluster")
 		return nil
 	}
+	if ti.IsEnabled() {
+		log.Printf("TLSInfo already fully set")
+		return nil
+	}
+
+	// at least one between cert and key need to be set
 	ti.certsDirectory, err = ioutil.TempDir("", "certsdir")
 	if err != nil {
 		return err
@@ -47,8 +53,17 @@ func (ti *TLSInfo) UpdateFromK8S() error {
 		log.Printf("unable to generate certificates: %v", err)
 		return err
 	}
-	ti.CertFilePath = certStore.CurrentPath()
-	ti.KeyFilePath = certStore.CurrentPath()
+
+	if ti.CertFilePath == "" {
+		ti.CertFilePath = certStore.CurrentPath()
+	} else {
+		log.Printf("NOT overriding cert file %s with %s", ti.CertFilePath, certStore.CurrentPath())
+	}
+	if ti.KeyFilePath == "" {
+		ti.KeyFilePath = certStore.CurrentPath()
+	} else {
+		log.Printf("NOT overriding key file %s with %s", ti.KeyFilePath, certStore.CurrentPath())
+	}
 	log.Printf("running in a K8S cluster: with configuration %#v", *ti)
 	return nil
 }
