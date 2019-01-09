@@ -24,12 +24,20 @@ and [kubevirt](https://github.com/kubevirt/kubevirt/releases/tag/v0.12.0) >= 0.1
 ### Deploy on KubeVirt running on [Kubernetes](https://kubernetes.io/)
 
 We expect kubernetes >= 1.12
+Move into the manifests directory:
+```bash
+cd cluster/manifests
+```
 
 TODO
 
 #### Deploy on KubeVirt running on [OKD](https://www.okd.io/)
 
 We expect okd >= 3.11.
+Move into the manifests directory:
+```bash
+cd cluster/manifests
+```
 
 Create the service using the provided manifest:
 ```bash
@@ -70,9 +78,14 @@ be used transparently with the vanilla infrastructure, with no extra configurati
 If you are unsure if this applies to your case, please ignore this and just use the previous,
 supported installatin method.
 
+Move into the manifests directory:
+```bash
+cd cluster/manifests
+```
+
 Create the config map:
 ```bash
-oc create -n openshift-monitoring -f config-map.yaml
+oc create -n openshift-monitoring -f fake-node-exporter/config-map.yaml
 ```
 
 You need to set up a new accounts and a new securityContextConstraints, both achieved doing:
@@ -93,7 +106,7 @@ oc patch scc scc-hostpath -p '{"allowHostPID": true}'
 
 Now you can deploy the collector
 ```
-oc create -n openshift-monitoring -f okd-daemonset.yaml
+oc create -n openshift-monitoring -f fake-node-exporter/okd-daemonset.yaml
 ```
 
 This is it. You should soon see the metrics in your prometheus servers.
