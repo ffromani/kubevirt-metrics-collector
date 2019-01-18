@@ -54,6 +54,17 @@ You need to set up a new accounts and a new securityContextConstraints, both ach
 oc create -n openshift-monitoring -f okd-account-scc.yaml
 ```
 
+Now add the permissions to the `securityContextConstraints` created on the step right above.
+First add permissions for the 'hostPath' volume:
+```bash
+oc patch scc scc-hostpath -p '{"allowHostDirVolumePlugin": true}'
+```
+
+Then make sure the `hostPID` setting is allowed:
+```bash
+oc patch scc scc-hostpath -p '{"allowHostPID": true}'
+```
+
 Now you can deploy the collector
 ```
 oc create -n openshift-monitoring -f okd-daemonset.yaml
@@ -80,6 +91,17 @@ oc create -n openshift-monitoring -f fake-node-exporter/config-map.yaml
 You need to set up a new accounts and a new securityContextConstraints, both achieved doing:
 ```bash
 oc create -n openshift-monitoring -f okd-account-scc.yaml
+```
+
+Now add the permissions to the `securityContextConstraints` created on the step right above.
+First add permissions for the 'hostPath' volume:
+```bash
+oc patch scc scc-hostpath -p '{"allowHostDirVolumePlugin": true}'
+```
+
+Then make sure the `hostPID` setting is allowed:
+```bash
+oc patch scc scc-hostpath -p '{"allowHostPID": true}'
 ```
 
 Now you can deploy the collector
@@ -112,19 +134,6 @@ spec:
 
 ```
 Note the usage of `serviceMonitorNamespaceSelector`. [See here for more details](https://github.com/coreos/prometheus-operator/issues/1331)
-
-### Fix security constraint permissions (optional)
-Depending on you setup, you may need to manually and explicitely set some security constraints.
-
-To add the permissions to the `securityContextConstraints` created previously, first add permissions for the 'hostPath' volume:
-```bash
-oc patch scc scc-hostpath -p '{"allowHostDirVolumePlugin": true}'
-```
-
-Then make sure the `hostPID` setting is allowed:
-```bash
-oc patch scc scc-hostpath -p '{"allowHostPID": true}'
-```
 
 ### Add labels to the namespaces
 This step depends on how you are running your cluster. As per kubevirt 0.10.z, if you using the `kube-system` namespace (by default it is so), you need to perform this step.
