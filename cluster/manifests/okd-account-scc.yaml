@@ -6,6 +6,8 @@ metadata:
   labels:
     kubevirt.io: ""
 ---
+allowHostDirVolumePlugin: true
+allowHostPID: true
 kind: SecurityContextConstraints
 apiVersion: v1
 metadata:
