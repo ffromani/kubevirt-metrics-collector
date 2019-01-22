@@ -20,7 +20,7 @@ spec:
       serviceAccountName: kubevirt-metrics-collector
       hostPID: true
       nodeSelector:
-        node-role.kubernetes.io/infra: "true"
+        node-role.kubernetes.io/compute: "true"
       containers:
       - name: collector
         args:
