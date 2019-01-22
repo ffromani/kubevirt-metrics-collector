@@ -1,11 +1,12 @@
 package k8sutils
 
 import (
+	"io/ioutil"
+	"os"
+
 	"k8s.io/client-go/rest"
 
-	"io/ioutil"
-	"log"
-	"os"
+	"github.com/fromanirh/kubevirt-metrics-collector/internal/pkg/log"
 )
 
 type TLSInfo struct {
@@ -18,7 +19,7 @@ func (ti *TLSInfo) Clean() {
 	if ti.certsDirectory != "" {
 		os.RemoveAll(ti.certsDirectory)
 		ti.certsDirectory = ""
-		log.Printf("TLSInfo cleaned up!")
+		log.Log.V(4).Infof("TLSInfo cleaned up!")
 	}
 }
 
@@ -30,11 +31,11 @@ func (ti *TLSInfo) UpdateFromK8S() error {
 	var err error
 	if _, err = rest.InClusterConfig(); err != nil {
 		// is not a real error, rather a supported case. So, let's swallow the error
-		log.Printf("running outside a K8S cluster")
+		log.Log.V(3).Infof("running outside a K8S cluster")
 		return nil
 	}
 	if ti.IsEnabled() {
-		log.Printf("TLSInfo already fully set")
+		log.Log.V(3).Infof("TLSInfo already fully set")
 		return nil
 	}
 
@@ -45,25 +46,25 @@ func (ti *TLSInfo) UpdateFromK8S() error {
 	}
 	namespace, err := GetNamespace()
 	if err != nil {
-		log.Printf("Error searching for namespace: %v", err)
+		log.Log.Warningf("Error searching for namespace: %v", err)
 		return err
 	}
 	certStore, err := GenerateSelfSignedCert(ti.certsDirectory, "kubevirt-metrics-collector", namespace)
 	if err != nil {
-		log.Printf("unable to generate certificates: %v", err)
+		log.Log.Warningf("unable to generate certificates: %v", err)
 		return err
 	}
 
 	if ti.CertFilePath == "" {
 		ti.CertFilePath = certStore.CurrentPath()
 	} else {
-		log.Printf("NOT overriding cert file %s with %s", ti.CertFilePath, certStore.CurrentPath())
+		log.Log.V(2).Infof("NOT overriding cert file %s with %s", ti.CertFilePath, certStore.CurrentPath())
 	}
 	if ti.KeyFilePath == "" {
 		ti.KeyFilePath = certStore.CurrentPath()
 	} else {
-		log.Printf("NOT overriding key file %s with %s", ti.KeyFilePath, certStore.CurrentPath())
+		log.Log.V(2).Infof("NOT overriding key file %s with %s", ti.KeyFilePath, certStore.CurrentPath())
 	}
-	log.Printf("running in a K8S cluster: with configuration %#v", *ti)
+	log.Log.V(3).Infof("running in a K8S cluster: with configuration %#v", *ti)
 	return nil
 }

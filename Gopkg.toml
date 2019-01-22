@@ -53,6 +53,14 @@
   name = "k8s.io/client-go"
   version = "8.0.0"
 
+[[constraint]]
+  name = "github.com/golang/glog"
+  branch = "master"
+
+[[constraint]]
+  name= "github.com/go-kit/kit"
+  revision = "fe6fe28ba0d54b39f27e79cddba4911b7e4fffc7"
+
 [prune]
   go-tests = true
   unused-packages = true

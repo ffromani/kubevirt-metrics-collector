@@ -20,17 +20,19 @@
 package processes
 
 import (
+	"context"
+	"fmt"
+	"net"
+	"time"
+
+	"github.com/golang/glog"
+
 	"google.golang.org/grpc"
+
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 	"k8s.io/kubernetes/pkg/kubelet/util"
 
 	"github.com/fromanirh/kubevirt-metrics-collector/pkg/procscanner"
-
-	"context"
-	"fmt"
-	"log"
-	"net"
-	"time"
 )
 
 const (
@@ -48,7 +50,7 @@ type CRIPodFinder struct {
 }
 
 func NewCRIPodFinder(runtimeEndPoint string, timeout time.Duration, scanner procscanner.ProcScanner) (*CRIPodFinder, error) {
-	log.Printf("connecting to '%v'...", runtimeEndPoint)
+	glog.Infof("connecting to '%v'...", runtimeEndPoint)
 	pr := &CRIPodFinder{
 		ProcDir: DefaultProcDir,
 		scanner: scanner,
@@ -65,7 +67,7 @@ func NewCRIPodFinder(runtimeEndPoint string, timeout time.Duration, scanner proc
 	}
 
 	pr.client = pb.NewRuntimeServiceClient(pr.conn)
-	log.Printf("connected to '%v'!", runtimeEndPoint)
+	glog.Infof("connected to '%v'!", runtimeEndPoint)
 	return pr, nil
 }
 
@@ -75,12 +77,12 @@ func (cpf *CRIPodFinder) FindPods() (map[string]*PodInfo, error) {
 
 	procs, err := cpf.scanner.Scan(cpf.ProcDir)
 	if err != nil {
-		log.Printf("error scanning for pods in %v: %v", cpf.ProcDir, err)
+		glog.Infof("error scanning for pods in %v: %v", cpf.ProcDir, err)
 		return pods, err
 	}
 	err = cpf.updateCRIInfo()
 	if err != nil {
-		log.Printf("error updating CRI infos: %v", err)
+		glog.Infof("error updating CRI infos: %v", err)
 		return pods, err
 	}
 

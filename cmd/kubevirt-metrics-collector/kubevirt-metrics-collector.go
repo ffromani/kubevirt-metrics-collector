@@ -19,21 +19,25 @@
 package main
 
 import (
+	goflag "flag"
+	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	flag "github.com/spf13/pflag"
 
 	"github.com/fromanirh/kubevirt-metrics-collector/internal/pkg/k8sutils"
+	"github.com/fromanirh/kubevirt-metrics-collector/internal/pkg/log"
 	"github.com/fromanirh/kubevirt-metrics-collector/pkg/monitoring/processes"
-
-	"fmt"
-	"log"
-	"net/http"
-	"os"
 )
 
 func Main() int {
+	goflag.Parse()
+	log.Log = log.Logger("kubevirt-metrics-collector")
+
 	tlsInfo := &k8sutils.TLSInfo{}
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s /path/to/kubevirt-metrics-collector.json\n", os.Args[0])
@@ -45,6 +49,8 @@ func Main() int {
 	debugMode := flag.BoolP("debug", "D", false, "enable pod resolution debug mode")
 	dumpMode := flag.BoolP("dump-metrics", "M", false, "dump the available metrics and exit")
 	checkMode := flag.BoolP("check-config", "C", false, "validate (and dump) configuration and exit")
+	_ = flag.IntP("v", "v", 2, "verbosiness level")
+
 	flag.Parse()
 
 	args := flag.Args()
@@ -54,7 +60,7 @@ func Main() int {
 	if *dumpMode {
 		co, err := processes.NewSelfCollector()
 		if err != nil {
-			log.Printf("error creating the collector: %v", err)
+			log.Log.Infof("error creating the collector: %v", err)
 			return 1
 		}
 		prometheus.MustRegister(co)
@@ -70,7 +76,7 @@ func Main() int {
 
 	conf, err := processes.NewConfigFromFile(args[0])
 	if err != nil {
-		log.Printf("error reading the configuration file %s: %v", args[0], err)
+		log.Log.Infof("error reading the configuration file %s: %v", args[0], err)
 		return 1
 	}
 
@@ -85,14 +91,14 @@ func Main() int {
 		return 0
 	}
 
-	log.Printf("kubevirt-metrics-collector started")
-	defer log.Printf("kubevirt-metrics-collector stopped")
+	log.Log.Infof("kubevirt-metrics-collector started")
+	defer log.Log.Infof("kubevirt-metrics-collector stopped")
 
 	co, err := processes.NewCollectorFromConf(conf)
 	if err == nil {
 		prometheus.MustRegister(co)
 	} else {
-		log.Printf("error creating the collector: %v", err)
+		log.Log.Warningf("error creating the collector: %v", err)
 		if !*fakeMode {
 			return 2
 		}
@@ -103,11 +109,11 @@ func Main() int {
 
 	http.Handle("/metrics", promhttp.Handler())
 	if tlsInfo.IsEnabled() {
-		log.Printf("TLS configured, serving over HTTPS")
-		log.Printf("%s", http.ListenAndServeTLS(conf.ListenAddress, tlsInfo.CertFilePath, tlsInfo.KeyFilePath, nil))
+		log.Log.Infof("TLS configured, serving over HTTPS")
+		log.Log.Infof("%s", http.ListenAndServeTLS(conf.ListenAddress, tlsInfo.CertFilePath, tlsInfo.KeyFilePath, nil))
 	} else {
-		log.Printf("TLS *NOT* configured, serving over HTTP")
-		log.Printf("%s", http.ListenAndServe(conf.ListenAddress, nil))
+		log.Log.Infof("TLS *NOT* configured, serving over HTTP")
+		log.Log.Infof("%s", http.ListenAndServe(conf.ListenAddress, nil))
 	}
 	return 0
 }

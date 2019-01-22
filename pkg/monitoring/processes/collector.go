@@ -20,10 +20,10 @@
 package processes
 
 import (
-	"log"
 	"path/filepath"
 	"runtime"
 
+	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/shirou/gopsutil/process"
 
@@ -125,19 +125,19 @@ func (co Collector) Collect(ch chan<- prometheus.Metric) {
 		for _, proc := range podInfo.Procs {
 			err = co.collectCPU(ch, podName, proc)
 			if err != nil {
-				log.Printf("failed to update CPU for pod %v: %v", podName, err)
+				glog.Warningf("failed to update CPU for pod %v: %v", podName, err)
 				continue
 			}
 
 			err = co.collectMemory(ch, podName, proc)
 			if err != nil {
-				log.Printf("failed to update Memory for pod %v: %v", podName, err)
+				glog.Warningf("failed to update Memory for pod %v: %v", podName, err)
 				continue
 			}
 			updated++
 		}
 	}
-	log.Printf("updated metrics for %v pods", updated)
+	glog.V(2).Infof("updated metrics for %v pods", updated)
 }
 
 func (co *Collector) collectCPU(ch chan<- prometheus.Metric, domain string, proc *process.Process) error {
