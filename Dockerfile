@@ -1,12 +1,12 @@
-FROM fedora:28
+FROM centos:7
 
 MAINTAINER "Francesco Romani" <fromani@redhat.com>
 ENV container docker
 
 RUN \
-  dnf install -y \
+  yum install -y \
     procps-ng curl less && \
-  dnf clean all
+  yum clean all
 
 RUN mkdir -p /etc/kubevirt-metrics-collector
 COPY cluster/kubevirt-metrics-collector.json /etc/kubevirt-metrics-collector/config.json
