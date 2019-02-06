@@ -24,9 +24,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/glog"
-
 	"github.com/shirou/gopsutil/process"
+
+	"github.com/fromanirh/kubevirt-metrics-collector/internal/pkg/log"
 )
 
 type PodInfoMap map[string]*PodInfo
@@ -94,7 +94,7 @@ func (dm *DomainMonitor) updatePodInfo() (PodInfoMap, error) {
 	defer dm.lock.Unlock()
 	pods, err := dm.podFinder.FindPods()
 	if err != nil {
-		glog.Warningf("error finding available pods: %v", err)
+		log.Log.Warningf("error finding available pods: %v", err)
 		return make(PodInfoMap), err
 	}
 
@@ -117,6 +117,6 @@ func (dm *DomainMonitor) updatePodInfo() (PodInfoMap, error) {
 		dm.pods[name] = podInfo
 	}
 
-	glog.V(3).Infof("refreshed %v pods", len(dm.pods))
+	log.Log.V(3).Infof("refreshed %v pods", len(dm.pods))
 	return dm.pods, nil
 }

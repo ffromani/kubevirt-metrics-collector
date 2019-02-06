@@ -19,102 +19,23 @@
 package main
 
 import (
-	goflag "flag"
-	"fmt"
-	"net/http"
 	"os"
-
-	"github.com/davecgh/go-spew/spew"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	flag "github.com/spf13/pflag"
 
 	"github.com/fromanirh/kubevirt-metrics-collector/internal/pkg/k8sutils"
 	"github.com/fromanirh/kubevirt-metrics-collector/internal/pkg/log"
-	"github.com/fromanirh/kubevirt-metrics-collector/pkg/monitoring/processes"
+	"github.com/fromanirh/kubevirt-metrics-collector/internal/pkg/service"
+
+	"github.com/fromanirh/kubevirt-metrics-collector/pkg/monitoring"
 )
 
 func Main() int {
-	goflag.Parse()
-	log.Log = log.Logger("kubevirt-metrics-collector")
-
 	tlsInfo := &k8sutils.TLSInfo{}
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s /path/to/kubevirt-metrics-collector.json\n", os.Args[0])
-		flag.PrintDefaults()
+	app := &monitoring.App{
+		TLSInfo: tlsInfo,
 	}
-	flag.StringVarP(&tlsInfo.CertFilePath, "cert-file", "c", "", "override path to TLS certificate - you need also the key to enable TLS")
-	flag.StringVarP(&tlsInfo.KeyFilePath, "key-file", "k", "", "override path to TLS key - you need also the cert to enable TLS")
-	fakeMode := flag.BoolP("fake", "F", false, "run even connection to CRI runtime fails")
-	debugMode := flag.BoolP("debug", "D", false, "enable pod resolution debug mode")
-	dumpMode := flag.BoolP("dump-metrics", "M", false, "dump the available metrics and exit")
-	checkMode := flag.BoolP("check-config", "C", false, "validate (and dump) configuration and exit")
-	_ = flag.IntP("v", "v", 2, "verbosiness level")
-
-	flag.Parse()
-
-	args := flag.Args()
-
-	var err error
-
-	if *dumpMode {
-		co, err := processes.NewSelfCollector()
-		if err != nil {
-			log.Log.Infof("error creating the collector: %v", err)
-			return 1
-		}
-		prometheus.MustRegister(co)
-
-		processes.DumpMetrics(os.Stderr)
-		return 1
-	}
-
-	if len(args) < 1 {
-		flag.Usage()
-		return 1
-	}
-
-	conf, err := processes.NewConfigFromFile(args[0])
-	if err != nil {
-		log.Log.Infof("error reading the configuration file %s: %v", args[0], err)
-		return 1
-	}
-
-	conf.DebugMode = *debugMode
-	conf.Validate()
-
-	if *debugMode || *checkMode {
-		spew.Fdump(os.Stderr, conf)
-	}
-
-	if *checkMode {
-		return 0
-	}
-
-	log.Log.Infof("kubevirt-metrics-collector started")
-	defer log.Log.Infof("kubevirt-metrics-collector stopped")
-
-	co, err := processes.NewCollectorFromConf(conf)
-	if err == nil {
-		prometheus.MustRegister(co)
-	} else {
-		log.Log.Warningf("error creating the collector: %v", err)
-		if !*fakeMode {
-			return 2
-		}
-	}
-
-	tlsInfo.UpdateFromK8S()
-	defer tlsInfo.Clean()
-
-	http.Handle("/metrics", promhttp.Handler())
-	if tlsInfo.IsEnabled() {
-		log.Log.Infof("TLS configured, serving over HTTPS")
-		log.Log.Infof("%s", http.ListenAndServeTLS(conf.ListenAddress, tlsInfo.CertFilePath, tlsInfo.KeyFilePath, nil))
-	} else {
-		log.Log.Infof("TLS *NOT* configured, serving over HTTP")
-		log.Log.Infof("%s", http.ListenAndServe(conf.ListenAddress, nil))
-	}
+	service.Setup(app)
+	log.InitializeLogging("kubevirt-metrics-collector")
+	app.Run()
 	return 0
 }
 
