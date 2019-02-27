@@ -31,7 +31,7 @@ spec:
         - containerPort: 9100
           protocol: "TCP"
           name: "https"
-        image: quay.io/fromani/kubevirt-metrics-collector:0.14.0
+        image: quay.io/fromani/kubevirt-metrics-collector:0.14.0.1
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: kubevirt-metrics-config

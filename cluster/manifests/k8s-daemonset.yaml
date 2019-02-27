@@ -25,7 +25,7 @@ spec:
         - containerPort: 19091
           protocol: "TCP"
           name: "metrics-vmi"
-        image: quay.io/fromani/kubevirt-metrics-collector:v0.14.0
+        image: quay.io/fromani/kubevirt-metrics-collector:v0.14.0.1
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: kubevirt-metrics-config
