@@ -18,6 +18,24 @@ Apache v2
 * [kubernetes APIs](https://github.com/kubernetes/kubernetes)
 
 
+## Image availability
+
+Up until version 0.13.0.w, `kubevirt-metrics-controller` container images were hosted on [docker hub](https://hub.docker.com/r/fromanirh/kubevirt-template-validator).
+From version 0.14.0.w, `kubevirt-metrics-controller` container images are hosted *also* on [quay.io](https://quay.io/repository/fromani/kubevirt-metrics-collector).
+
+The recommended repository is **quay.io**. Images on docker hub will still be kept for backward compatibility and will be updated during the 2019, but not after.
+
+### (re)building container images
+
+#### dockerhub images
+
+Just use the regolar docker tooling. Use `Dockerfile.hub`.
+
+#### quay.io images
+
+We use `buildah` and `podman` - [intro here](https://developers.redhat.com/blog/2019/02/21/podman-and-buildah-for-docker-users/).
+You can find helper scripts in `hack/container/buildah-*`. They assume you have a quay.io account and you did `podman login` before using them.
+
 ## Installation
 
 This project can be deployed in a kubevirt cluster to report metrics about processes running inside PODs.
