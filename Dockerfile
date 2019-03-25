@@ -4,7 +4,8 @@ MAINTAINER "Francesco Romani" <fromani@redhat.com>
 ENV container docker
 
 RUN yum -y update
-RUN  yum install -y procps-ng curl less && yum clean all
+RUN yum install -y procps-ng curl less
+RUN yum clean all
 
 RUN mkdir -p /etc/kubevirt-metrics-collector
 COPY cluster/kubevirt-metrics-collector.json /etc/kubevirt-metrics-collector/config.json
