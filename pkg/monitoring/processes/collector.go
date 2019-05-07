@@ -50,7 +50,7 @@ var (
 				"branch":      verinfo.BRANCH,
 				"goversion":   runtime.Version(),
 				"revision":    verinfo.REVISION,
-				"kubeversion": verinfo.KUBEVERSION,
+				"kubeversion": verinfo.VERSION, // TODO: clarify what this really represents
 				"version":     "1",
 			},
 		},
