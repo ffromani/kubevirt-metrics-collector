@@ -25,6 +25,7 @@ _testmain.go
 
 Gopkg.lock
 tags
+cmd/kubevirt-metrics-collector/kubevirt-metrics-collector
 _out
 internal/pkg/version/version.go
 pkg/monitoring/processes/coverage.out

@@ -1,22 +1,19 @@
 all: binary
 
-docker: binary
-	docker build .
+#vendor:
+#	dep ensure
 
-dockertag: binary
-	./hack/docker/tag.sh
+binary: #vendor
+	./hack/build/build.sh ${VERSION}
 
-dockerpush: binary
-	./hack/docker/push.sh
-
-vendor:
-	dep ensure
-
-binary: vendor
-	./hack/build/build.sh
+release: binary
+	mkdir -p _out
+	cp cmd/kubevirt-metrics-collector/kubevirt-metrics-collector _out/kubevirt-metrics-collector-${VERSION}-linux-amd64
+	hack/container/docker-push.sh ${VERSION}
 
 clean:
 	rm -f cmd/kubevirt-metrics-collector/kubevirt-metrics-collector
+	rm -rf _out
 
-.PHONY: all docker dockertag dockerpush binary clean
+.PHONY: all vendor binary release clean
 

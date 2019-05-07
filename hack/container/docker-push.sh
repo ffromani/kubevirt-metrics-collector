@@ -1,5 +1,9 @@
 #!/bin/bash
 
-TAG="${1:-devel}"
+set -e
 
-docker build -t fromanirh/kubevirt-metrics-collector:$TAG . && docker push fromanirh/kubevirt-metrics-collector:$TAG
+VERSION="${1:-devel}"
+
+echo "$QUAY_BOT_PASS" | docker login -u="$QUAY_BOT_USER" --password-stdin quay.io
+docker build -t quay.io/fromani/kubevirt-metrics-collector:$VERSION .
+docker push quay.io/fromani/kubevirt-metrics-collector:$VERSION
