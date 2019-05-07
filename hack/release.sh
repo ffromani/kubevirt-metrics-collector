@@ -2,6 +2,8 @@
 
 set -e
 
+PROJECT=kubevirt-metrics-collector
+
 if [ -z "$1" ]; then
 	echo "usage: $0 <tag>"
 	exit 1
@@ -19,13 +21,13 @@ if [ -d _out ]; then
 	rm -rf _out;
 fi
 mkdir -p _out
-cp cmd/kubevirt-metrics-collector/kubevirt-metrics-collector _out/kubevirt-metrics-collector-${TAG}-linux-amd64
-git add cmd/kubevirt-metrics-collector/kubevirt-metrics-collector && git ci -s -m "binaries: rebuild for tag ${TAG}"
-git tag -a -m "kubevirt-metrics-collector ${TAG}" ${TAG}
+cp cmd/${PROJECT}/${PROJECT} _out/${PROJECT}-${TAG}-linux-amd64
+git add cmd/${PROJECT}/${PROJECT} && git ci -s -m "binaries: rebuild for tag ${TAG}"
+git tag -a -m "${PROJECT} ${TAG}" ${TAG}
 git push origin --tags ${BRANCH}
 if  which github-release 2> /dev/null; then
-	github-release release -t ${TAG} -r kubevirt-metrics-collector
-	github-release upload -t ${TAG} -r kubevirt-metrics-collector \
-		-n kubevirt-metrics-collector-${TAG}-linux-amd64 \
-		-f _out/kubevirt-metrics-collector-${TAG}-linux-amd64
+	github-release release -t ${TAG} -r ${PROJECT}
+	github-release upload -t ${TAG} -r ${PROJECT} \
+		-n ${PROJECT}-${TAG}-linux-amd64 \
+		-f _out/${PROJECT}-${TAG}-linux-amd64
 fi
