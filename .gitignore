@@ -23,10 +23,9 @@ _testmain.go
 *.test
 *.prof
 
-cmd/kubevirt-metrics-collector/kubevirt-metrics-collector
 Gopkg.lock
 tags
-
+_out
 internal/pkg/version/version.go
 pkg/monitoring/processes/coverage.out
 pkg/procscanner/coverage.out
