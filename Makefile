@@ -15,5 +15,8 @@ clean:
 	rm -f cmd/kubevirt-metrics-collector/kubevirt-metrics-collector
 	rm -rf _out
 
-.PHONY: all vendor binary release clean
+unittests: binary
+	go test -v ./...
+
+.PHONY: all vendor binary release clean unittests
 

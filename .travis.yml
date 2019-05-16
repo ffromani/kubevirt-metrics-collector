@@ -2,12 +2,20 @@ sudo: required
 dist: xenial
 language: go
 go: "1.11"
+branches:
+  only:
+  - master
+  - /^v[0-9]/
 
 services:
 - docker
 
 jobs:
   include:
+  - stage: Tests
+    name: Perform unit tests
+    script: make unittests "VERSION=devel"
+
   - stage: Build and Deploy
     name: Build and Deploy to GitHub
     if: tag IS present
