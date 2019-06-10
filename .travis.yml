@@ -33,4 +33,4 @@ jobs:
       on:
         tags: true
         branch: master
-        repo: fromanirh/kubevirt-metrics-collector
+        repo: $TRAVIS_REPO_SLUG
